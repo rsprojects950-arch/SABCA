@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "SABCA",
+    "slug": "sabca-app",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "icon": "./assets/images/app_icon_square.jpg",
+    "scheme": "sabcaapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.infraxpert.sabca",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "SABCA App uses Face ID to provide secure and convenient access to your account.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/app_icon_round.jpg",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "package": "com.infraxpert.sabca",
+      "versionCode": 4
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/sabca_new_logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "expo-secure-store",
+      "expo-asset",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "c1f22f4e-101c-440d-ad2a-05c1a4ef6504"
+      }
+    }
+  }
+}
