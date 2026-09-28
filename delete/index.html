@@ -13,7 +13,7 @@
   <main class="slideshow-wrapper-centered">
     <div class="slideshow-header-main">
       <h1>SABCA Account Deletion Guide</h1>
-      <p>Interactive slideshow showing the email request and administrative deletion flow for the SABCA mobile app.</p>
+      <p>Interactive slideshow showing the automated in-app deletion and administrative deletion flow for the SABCA mobile app.</p>
     </div>
 
     <!-- Slideshow Frame -->
@@ -25,14 +25,63 @@
           <span class="window-dot dot-yellow"></span>
           <span class="window-dot dot-green"></span>
         </div>
-        <div class="slideshow-title-info" id="slide-progress">Slide 1 of 7</div>
+        <div class="slideshow-title-info" id="slide-progress">Slide 1 of 10</div>
       </div>
 
       <!-- Slides Wrapper -->
       <div class="slides-wrapper">
+                <!-- Method 1: Automated In-App Deletion -->
         <!-- Slide 1 -->
         <div class="slide active">
           <div class="slide-image-container" onclick="openLightbox(0)">
+            <img src="assets/user_profile.jpeg" alt="Main Profile and Settings Screen">
+            <div class="zoom-hint">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Click to Enlarge
+            </div>
+          </div>
+          <div class="slide-details">
+            <div class="slide-step">Method 1: In-App (Step 1 of 3)</div>
+            <h3 class="slide-title">Profile Settings</h3>
+            <p class="slide-description">To automatically delete your account, open the SABCA app, navigate to your main Profile screen, and scroll down to the Settings menu.</p>
+          </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="slide">
+          <div class="slide-image-container" onclick="openLightbox(1)">
+            <img src="assets/user_delete_dialog.jpeg" alt="Delete Account Confirmation Dialog">
+            <div class="zoom-hint">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Click to Enlarge
+            </div>
+          </div>
+          <div class="slide-details">
+            <div class="slide-step">Method 1: In-App (Step 2 of 3)</div>
+            <h3 class="slide-title">Delete Account Option</h3>
+            <p class="slide-description">Select the "Delete Account" option. A confirmation dialog box will appear warning you about the deletion. Press "Delete Account" to confirm.</p>
+          </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="slide">
+          <div class="slide-image-container" onclick="openLightbox(2)">
+            <img src="assets/user_delete_success.jpeg" alt="Account Deleted Successfully">
+            <div class="zoom-hint">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Click to Enlarge
+            </div>
+          </div>
+          <div class="slide-details">
+            <div class="slide-step">Method 1: In-App (Step 3 of 3)</div>
+            <h3 class="slide-title">Deletion Success</h3>
+            <p class="slide-description">Your account and associated data are immediately removed from the system. A success message is shown, confirming the action.</p>
+          </div>
+        </div>
+
+<!-- Slide 4 -->
+        <div class="slide">
+          <div class="slide-image-container" onclick="openLightbox(3)">
             <img src="assets/email_request.png" alt="Email written for deletion request">
             <div class="zoom-hint">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -40,15 +89,15 @@
             </div>
           </div>
           <div class="slide-details">
-            <div class="slide-step">Step 1 of 7</div>
+            <div class="slide-step">Method 2: Admin (Step 1 of 7)</div>
             <h3 class="slide-title">User Requests Deletion</h3>
             <p class="slide-description">The user drafts an email from their registered email account, detailing their request for account and data deletion, and sends it to the SABCA admin team.</p>
           </div>
         </div>
 
-        <!-- Slide 2 -->
+        <!-- Slide 5 -->
         <div class="slide">
-          <div class="slide-image-container" onclick="openLightbox(1)">
+          <div class="slide-image-container" onclick="openLightbox(4)">
             <img src="assets/admin_home.jpeg" alt="Admin Dashboard Home screen">
             <div class="zoom-hint">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -56,15 +105,15 @@
             </div>
           </div>
           <div class="slide-details">
-            <div class="slide-step">Step 2 of 7</div>
+            <div class="slide-step">Method 2: Admin (Step 2 of 7)</div>
             <h3 class="slide-title">Admin Dashboard Entry</h3>
             <p class="slide-description">The SABCA Administrator logs into the official admin panel. The admin console serves as the control center for all contractor profile requests.</p>
           </div>
         </div>
 
-        <!-- Slide 3 -->
+        <!-- Slide 6 -->
         <div class="slide">
-          <div class="slide-image-container" onclick="openLightbox(2)">
+          <div class="slide-image-container" onclick="openLightbox(5)">
             <img src="assets/admin_users.jpeg" alt="Admin navigating to users list">
             <div class="zoom-hint">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -72,15 +121,15 @@
             </div>
           </div>
           <div class="slide-details">
-            <div class="slide-step">Step 3 of 7</div>
+            <div class="slide-step">Method 2: Admin (Step 3 of 7)</div>
             <h3 class="slide-title">Navigating to Manage Users</h3>
             <p class="slide-description">From the administrative sidebar panel, the administrator selects the "Manage Users" option to view active contractor records.</p>
           </div>
         </div>
 
-        <!-- Slide 4 -->
+        <!-- Slide 7 -->
         <div class="slide">
-          <div class="slide-image-container" onclick="openLightbox(3)">
+          <div class="slide-image-container" onclick="openLightbox(6)">
             <img src="assets/admin_user_list.jpeg" alt="List of users in admin panel">
             <div class="zoom-hint">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -88,15 +137,15 @@
             </div>
           </div>
           <div class="slide-details">
-            <div class="slide-step">Step 4 of 7</div>
+            <div class="slide-step">Method 2: Admin (Step 4 of 7)</div>
             <h3 class="slide-title">Locating the Requesting User</h3>
             <p class="slide-description">The administrator checks the necessities (like active dues, pending event registrations) and reviews the list of registered users.</p>
           </div>
         </div>
 
-        <!-- Slide 5 -->
+        <!-- Slide 8 -->
         <div class="slide">
-          <div class="slide-image-container" onclick="openLightbox(4)">
+          <div class="slide-image-container" onclick="openLightbox(7)">
             <img src="assets/admin_delete_select.jpeg" alt="Selecting user to delete">
             <div class="zoom-hint">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -104,15 +153,15 @@
             </div>
           </div>
           <div class="slide-details">
-            <div class="slide-step">Step 5 of 7</div>
+            <div class="slide-step">Method 2: Admin (Step 5 of 7)</div>
             <h3 class="slide-title">Initiating User Deletion</h3>
             <p class="slide-description">The admin finds the user requesting deletion (for example, John Doe) and triggers the account delete option.</p>
           </div>
         </div>
 
-        <!-- Slide 6 -->
+        <!-- Slide 9 -->
         <div class="slide">
-          <div class="slide-image-container" onclick="openLightbox(5)">
+          <div class="slide-image-container" onclick="openLightbox(8)">
             <img src="assets/admin_delete_confirm.jpeg" alt="Admin Deletion Confirmation Pop-up">
             <div class="zoom-hint">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -120,15 +169,15 @@
             </div>
           </div>
           <div class="slide-details">
-            <div class="slide-step">Step 6 of 7</div>
+            <div class="slide-step">Method 2: Admin (Step 6 of 7)</div>
             <h3 class="slide-title">Confirm Deletion</h3>
             <p class="slide-description">The admin console displays a verification alert warning that this action is irreversible. The administrator confirms and approves the deletion request.</p>
           </div>
         </div>
 
-        <!-- Slide 7 -->
+        <!-- Slide 10 -->
         <div class="slide">
-          <div class="slide-image-container" onclick="openLightbox(6)">
+          <div class="slide-image-container" onclick="openLightbox(9)">
             <img src="assets/admin_delete_success.jpeg" alt="Account successfully deleted popup">
             <div class="zoom-hint">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -136,7 +185,7 @@
             </div>
           </div>
           <div class="slide-details">
-            <div class="slide-step">Step 7 of 7</div>
+            <div class="slide-step">Method 2: Admin (Step 7 of 7)</div>
             <h3 class="slide-title">Deletion Completed</h3>
             <p class="slide-description">The system completes the request and removes the user's data permanently. A confirmation notice is shown, and the user's access is immediately revoked.</p>
           </div>
