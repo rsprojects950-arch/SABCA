@@ -209,7 +209,7 @@ export default function ManageDirectoryScreen() {
                     <Text style={[styles.label, { color: colors.text }]}>Email Address</Text>
                     <TextInput
                         style={[styles.input, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9', color: colors.text, borderColor: colors.border }]}
-                        placeholder="e.g., mail@example.com"
+                        placeholder="e.g., member@sabca.org.in"
                         placeholderTextColor={colors.icon}
                         keyboardType="email-address"
                         autoCapitalize="none"

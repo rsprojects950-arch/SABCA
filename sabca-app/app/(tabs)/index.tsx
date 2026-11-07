@@ -1246,8 +1246,8 @@ export default function ProfileScreen() {
             style={styles.infoListGradient}
           >
             <View style={[styles.infoList, { backgroundColor: colors.card }]}>
-              <InfoItem icon={Smartphone} label={profile?.phone || "+91 98765 43210"} color={colors.text} iconColor={colors.icon} />
-              <InfoItem icon={Mail} label={user?.email || "email@example.com"} color={colors.text} iconColor={colors.icon} />
+              <InfoItem icon={Smartphone} label={profile?.phone || "Not provided"} color={colors.text} iconColor={colors.icon} />
+              <InfoItem icon={Mail} label={user?.email || "Not provided"} color={colors.text} iconColor={colors.icon} />
               <InfoItem icon={Briefcase} label={profile?.company_name || "Add Company Name"} color={colors.text} iconColor={colors.icon} />
               <InfoItem icon={MapPin} label={profile?.location || "Add Location"} color={colors.text} iconColor={colors.icon} />
               <InfoItem icon={FileText} label={profile?.gst_number || "Add GST Number"} color={colors.text} iconColor={colors.icon} />
@@ -1449,7 +1449,7 @@ const SecuritySection = () => {
     setVerifying(true);
     try {
       // Verify password with Supabase
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: user?.email || '',
         password: password,
       });
@@ -1459,7 +1459,9 @@ const SecuritySection = () => {
       // Authenticate with Biometrics
       const success = await authenticate('Enable Biometric Login');
       if (success) {
-        await setBiometricEnabled(true, { email: user?.email || '', pass: password });
+        const refreshToken = data.session?.refresh_token;
+        if (!refreshToken) throw new Error('Failed to retrieve session refresh token');
+        await setBiometricEnabled(true, refreshToken);
         setModalVisible(false);
         setPassword('');
         Alert.alert(t('common.success'), t('profile.security.successEnabled'));
@@ -1874,7 +1876,7 @@ const PoweredByTile = () => {
     <TouchableOpacity
       onPress={() => {
         lightImpact();
-        Linking.openURL('https://infraxpert.com');
+        Linking.openURL('https://infraxpert.in/');
       }}
       activeOpacity={0.8}
     >

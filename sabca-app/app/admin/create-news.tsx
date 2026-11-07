@@ -215,7 +215,7 @@ export default function CreateNewsScreen() {
                             <LinkIcon size={20} color={colors.icon} style={styles.inputIcon} />
                             <TextInput
                                 style={[styles.input, styles.inputWithIcon, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
-                                placeholder="https://example.com/full-article"
+                                placeholder="https://sabca.org.in/news-article"
                                 value={articleUrl}
                                 onChangeText={setArticleUrl}
                                 placeholderTextColor={colors.icon}
