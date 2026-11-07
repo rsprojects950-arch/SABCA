@@ -13,13 +13,13 @@ import { DISTRICTS, District } from '../../constants/Districts';
 import { useTheme } from '../../ctx/ThemeContext';
 
 export default function OnboardingScreen() {
-    const { user, deleteAccount, isBiometricEnabled } = useAuth();
+    const { user, deleteAccount, signOut } = useAuth();
     const { colors, isDark } = useTheme();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut({ scope: isBiometricEnabled ? 'local' : 'global' });
+        await signOut();
         router.replace('/(auth)/login');
     };
 

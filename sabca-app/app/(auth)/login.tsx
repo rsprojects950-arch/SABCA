@@ -91,9 +91,11 @@ export default function Login() {
         const success = await authenticate(`Sign in to SABCA using ${biometricType}`);
         if (success) {
             setLoading(true);
-            const { error } = await signInWithBiometrics();
+            const { data, error } = await signInWithBiometrics();
             if (error) {
                 Alert.alert('Login Notice', error.message || 'Stored biometric session expired. Please sign in with your password to re-activate.');
+            } else if (data?.session) {
+                router.replace('/(tabs)');
             }
             setLoading(false);
         }

@@ -17,7 +17,8 @@ test('Auth & Biometric Security (OWASP MASVS & Apple Guideline 1.6)', async (t) 
 
     await t.test('Verifies Supabase refresh token is used as biometric credential key', () => {
         assert(authCode.includes("const REFRESH_TOKEN_KEY = 'BIOMETRIC_REFRESH_TOKEN'"), 'Missing REFRESH_TOKEN_KEY constant');
-        assert(authCode.includes('refresh_token: refreshToken'), 'signInWithBiometrics must use setSession with refresh_token');
+        assert(authCode.includes('supabase.auth.refreshSession'), 'signInWithBiometrics must use refreshSession');
+        assert(authCode.includes('refresh_token: refreshToken'), 'signInWithBiometrics must pass refresh_token to refreshSession');
     });
 
     await t.test('Verifies SecureStore uses WHEN_UNLOCKED_THIS_DEVICE_ONLY for Keychain accessibility', () => {
@@ -37,10 +38,17 @@ test('Auth & Biometric Security (OWASP MASVS & Apple Guideline 1.6)', async (t) 
         assert(!authCode.includes('await setBiometricEnabled(false);'), 'Destructive wipe of biometric enrollment detected on token error');
     });
 
-    await t.test('Verifies sign out uses local scope when biometrics enabled to preserve refresh token', () => {
+    await t.test('Verifies AuthContext provides signOut with local session preservation when biometrics enabled', () => {
+        assert(authCode.includes('signOut: () => Promise<void>'), 'Missing signOut in AuthContextType');
+        assert(authCode.includes('_removeSession'), 'Missing _removeSession local preservation in signOut');
+
         const tabsIndexPath = path.resolve(__dirname, '../app/(tabs)/index.tsx');
         const tabsCode = fs.readFileSync(tabsIndexPath, 'utf8');
-        assert(tabsCode.includes("scope: isBiometricEnabled ? 'local' : 'global'"), 'Missing conditional local scope sign out in profile screen');
+        assert(tabsCode.includes('await signOut()'), 'Profile screen must call centralized signOut');
+
+        const onboardingPath = path.resolve(__dirname, '../app/onboarding/index.tsx');
+        const onboardingCode = fs.readFileSync(onboardingPath, 'utf8');
+        assert(onboardingCode.includes('await signOut()'), 'Onboarding screen must call centralized signOut');
     });
 });
 

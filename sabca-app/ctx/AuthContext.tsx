@@ -16,6 +16,7 @@ type AuthContextType = {
     setBiometricEnabled: (enabled: boolean, refreshToken?: string) => Promise<void>;
     signInWithBiometrics: () => Promise<{ data: { session: Session | null; user: User | null }; error: any }>;
     deleteAccount: () => Promise<{ error: any }>;
+    signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
     setBiometricEnabled: async () => { },
     signInWithBiometrics: async () => ({ data: { session: null, user: null }, error: new Error('Not implemented') }),
     deleteAccount: async () => ({ error: new Error('Not implemented') }),
+    signOut: async () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -199,9 +201,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 throw new Error('No biometric session found. Please log in normally once.');
             }
 
-            const { data, error } = await supabase.auth.setSession({
+            const { data, error } = await supabase.auth.refreshSession({
                 refresh_token: refreshToken,
-                access_token: '',
             });
 
             if (error) {
@@ -270,6 +271,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
+    const signOut = async () => {
+        try {
+            if (isBiometricEnabled) {
+                // Biometric session preservation:
+                // Clear the active session locally without sending POST /logout to Supabase server.
+                // This keeps the refresh token in the device's SecureStore Keychain valid on the server,
+                // allowing seamless re-authentication upon the next Face ID / Touch ID scan.
+                if (typeof (supabase.auth as any)._removeSession === 'function') {
+                    await (supabase.auth as any)._removeSession();
+                } else {
+                    await supabase.auth.signOut({ scope: 'local' });
+                }
+            } else {
+                // Non-biometric sign-out: full server-side revocation
+                await supabase.auth.signOut({ scope: 'global' });
+            }
+        } catch (error) {
+            console.error('Error during sign out:', error);
+        } finally {
+            setSession(null);
+            setUser(null);
+            setIsAdmin(false);
+            setUserRole(null);
+        }
+    };
+
     const value = React.useMemo(() => ({
         session,
         user,
@@ -283,6 +310,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setBiometricEnabled,
         signInWithBiometrics,
         deleteAccount,
+        signOut,
     }), [session, user, isLoading, isAdmin, userRole, isProfileComplete, isMembershipActive, isBiometricEnabled]);
 
     return (
