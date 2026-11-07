@@ -11,7 +11,7 @@ import { useAuth } from '../../ctx/AuthContext';
 import { useBiometrics } from '../../hooks/useBiometrics';
 
 export default function Login() {
-    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('phone');
+    const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
@@ -40,13 +40,14 @@ export default function Login() {
 
         if (loginMethod === 'email') {
             const { error: emailError } = await supabase.auth.signInWithPassword({
-                email,
+                email: email.trim().toLowerCase(),
                 password,
             });
             error = emailError;
         } else {
+            const cleanPhone = phone.trim().replace(/[^0-9]/g, '');
             // Validate phone number
-            if (phone.length !== 10) {
+            if (cleanPhone.length !== 10) {
                 Alert.alert('Invalid Phone Number', 'Please enter a valid 10-digit phone number.');
                 setLoading(false);
                 return;
@@ -59,7 +60,7 @@ export default function Login() {
                 // It prevents outsiders from guessing emails by phone numbers.
                 const { data: emailData, error: rpcError } = await supabase
                     .rpc('verify_login_by_phone', { 
-                        p_phone: '+91' + phone, 
+                        p_phone: '+91' + cleanPhone, 
                         p_password: password 
                     });
 
@@ -133,7 +134,10 @@ export default function Login() {
     };
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? (Platform.isPad ? undefined : 'padding') : 'height'} 
+            style={styles.container}
+        >
             <Stack.Screen options={{ headerShown: false }} />
             <LinearGradient
                 colors={Colors.gradients.primary}
@@ -150,21 +154,21 @@ export default function Login() {
                 <Text style={styles.subtitle}>For All-Works for All-Voice for All Contractors</Text>
             </View>
 
-            <BlurView intensity={20} tint="light" style={styles.formContainer}>
+            <View style={styles.formContainer}>
 
                 {/* Login Method Toggle */}
                 <View style={styles.toggleContainer}>
-                    <TouchableOpacity
-                        style={[styles.toggleBtn, loginMethod === 'phone' && styles.toggleBtnActive]}
-                        onPress={() => setLoginMethod('phone')}
-                    >
-                        <Text style={[styles.toggleText, loginMethod === 'phone' && styles.toggleTextActive]}>Phone</Text>
-                    </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.toggleBtn, loginMethod === 'email' && styles.toggleBtnActive]}
                         onPress={() => setLoginMethod('email')}
                     >
                         <Text style={[styles.toggleText, loginMethod === 'email' && styles.toggleTextActive]}>Email</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.toggleBtn, loginMethod === 'phone' && styles.toggleBtnActive]}
+                        onPress={() => setLoginMethod('phone')}
+                    >
+                        <Text style={[styles.toggleText, loginMethod === 'phone' && styles.toggleTextActive]}>Phone</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -273,7 +277,7 @@ export default function Login() {
                     </Link>
                 </View>
 
-            </BlurView>
+            </View>
 
             <View style={styles.kodeSparkFooter}>
                 <Text style={styles.poweredByText}>Powered By InfraXpert</Text>
@@ -288,7 +292,7 @@ export default function Login() {
                 onRequestClose={() => setForgotPwdVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <BlurView intensity={90} tint="dark" style={styles.modalContent}>
+                    <View style={[styles.modalContent, { backgroundColor: 'rgba(0,0,0,0.8)' }]}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>Reset Password</Text>
                             <TouchableOpacity onPress={() => setForgotPwdVisible(false)}>
@@ -334,7 +338,7 @@ export default function Login() {
                                 </LinearGradient>
                             )}
                         </TouchableOpacity>
-                    </BlurView>
+                    </View>
                 </View>
             </Modal>
         </ScrollView>
@@ -389,9 +393,11 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     formContainer: {
-        marginHorizontal: 30,
-        borderRadius: 20,
-        padding: 20,
+        width: '90%',
+        maxWidth: 400,
+        alignSelf: 'center',
+        borderRadius: 24,
+        padding: 22,
         overflow: 'hidden',
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,

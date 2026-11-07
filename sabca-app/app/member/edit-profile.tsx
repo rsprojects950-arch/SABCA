@@ -176,7 +176,7 @@ export default function EditProfileScreen() {
             const updates = {
                 full_name: fullName,
 
-                phone: `+91${phone}`, // Ensure +91 is added
+                phone: phone?.trim() ? `+91${phone.trim().replace(/^\+91/, '')}` : null,
                 company_name: companyName,
 
                 location: location,
@@ -301,7 +301,9 @@ export default function EditProfileScreen() {
                         </View>
 
                         <View style={styles.inputGroup}>
-                            <Text style={[styles.label, { color: colors.icon }]}>{t('profile.edit.phoneNumber')}</Text>
+                            <Text style={[styles.label, { color: colors.icon }]}>
+                                {t('profile.edit.phoneNumber')} <Text style={{ fontSize: 13, fontWeight: 'normal', color: colors.icon }}>(Optional)</Text>
+                            </Text>
                             <View style={styles.phoneContainer}>
                                 <View style={[styles.countryCode, { backgroundColor: colors.card, borderColor: colors.border }]}>
                                     <Text style={[styles.countryCodeText, { color: colors.text }]}>+91</Text>
@@ -310,7 +312,7 @@ export default function EditProfileScreen() {
                                     style={[styles.input, styles.phoneInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
                                     value={phone}
                                     onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
-                                    placeholder="98765 43210"
+                                    placeholder="Mobile Number (Optional)"
                                     placeholderTextColor={colors.icon}
                                     keyboardType="phone-pad"
                                     maxLength={10}
@@ -517,6 +519,9 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 24,
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     avatarSection: {
         alignItems: 'center',
@@ -637,6 +642,8 @@ const styles = StyleSheet.create({
     },
     dropdownList: {
         width: '80%',
+        maxWidth: 480,
+        alignSelf: 'center',
         maxHeight: 400,
         borderRadius: 12,
         borderWidth: 1,

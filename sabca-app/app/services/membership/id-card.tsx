@@ -128,9 +128,9 @@ export default function DigitalIDCardScreen() {
         }
     };
 
-    const avatarSource = profile?.avatar_url
-        ? { uri: profile.avatar_url }
-        : { uri: 'https://i.pravatar.cc/300?img=11' }; // Fallback
+    const defaultAvatar = require('../../../assets/images/app_icon_round.jpg');
+    const avatarUri = profile?.avatar_url || user?.user_metadata?.avatar_url;
+    const avatarSource = avatarUri ? { uri: avatarUri } : defaultAvatar;
 
     // Ensure profile mapping for isLifeMember which was missing
     const isLifeMember = profile?.membership_type?.toLowerCase() === 'life' || profile?.membership_type?.toLowerCase() === 'lifetime';
@@ -214,7 +214,7 @@ export default function DigitalIDCardScreen() {
                             {/* Avatar Right */}
                             <View style={[styles.avatarArea, { paddingTop: 0, width: mm(13.5), height: mm(13.5), marginRight: mm(4) }]}>
                                 <Image
-                                    source={{ uri: profile?.avatar_url || user?.user_metadata?.avatar_url || 'https://i.pravatar.cc/150?img=12' }}
+                                    source={avatarSource}
                                     style={{ width: '100%', height: '100%', borderRadius: mm(13.5) / 2, borderWidth: mm(0.15), borderColor: '#175b8e', backgroundColor: '#E2E8F0' }}
                                     resizeMode="cover"
                                 />

@@ -15,7 +15,7 @@ export default function PrivacyPolicy() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F1F5F9' }]}>
+                <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F1F5F9' }]}>
                     <ChevronLeft size={24} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>Privacy Policy</Text>
@@ -248,6 +248,9 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     title: {
         fontSize: 24,

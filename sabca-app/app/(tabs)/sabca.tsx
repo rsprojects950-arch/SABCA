@@ -686,6 +686,9 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
         paddingBottom: 100,
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     cardGradientBorder: {
         width: '100%',
@@ -870,6 +873,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFF',
         borderRadius: 24,
         width: '100%',
+        maxWidth: 480,
+        alignSelf: 'center',
         maxHeight: '60%',
         overflow: 'hidden',
     },
