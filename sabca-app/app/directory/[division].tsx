@@ -6,6 +6,7 @@ import { ArrowLeft, Phone, Mail, MapPin } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { supabase } from '../../lib/supabase';
 import { useTheme } from '../../ctx/ThemeContext';
+import { useModeration } from '../../ctx/ModerationContext';
 import { MemberCardSkeleton } from '../../components/Skeleton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useHaptics } from '../../hooks/useHaptics';
@@ -14,6 +15,7 @@ export default function DirectoryDivisionScreen() {
     const { division, name } = useLocalSearchParams();
     const router = useRouter();
     const { colors, isDark } = useTheme();
+    const { isBlocked, showModerationOptions } = useModeration();
     const { lightImpact } = useHaptics();
     const [contacts, setContacts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,11 +56,18 @@ export default function DirectoryDivisionScreen() {
         });
     };
 
+    const visibleContacts = contacts.filter((c) => !isBlocked(c.id));
+
     const renderContactItem = ({ item }: { item: any }) => {
         const initial = item.name ? item.name.charAt(0).toUpperCase() : '?';
 
         return (
-            <View style={[styles.contactCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
+            <TouchableOpacity
+                activeOpacity={0.88}
+                delayLongPress={400}
+                onLongPress={() => showModerationOptions({ id: item.id, name: item.name })}
+                style={[styles.contactCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}
+            >
                 <View style={styles.contactHeader}>
                     <LinearGradient
                         colors={Colors.gradients.primary}
@@ -134,7 +143,7 @@ export default function DirectoryDivisionScreen() {
                         </View>
                     </TouchableOpacity>
                 </View>
-            </View>
+            </TouchableOpacity>
         );
     };
 
@@ -148,7 +157,7 @@ export default function DirectoryDivisionScreen() {
                 <View style={styles.headerTextContainer}>
                     <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>{name || 'Directory'}</Text>
                     <Text style={[styles.headerSubtitle, { color: colors.icon }]}>
-                        {contacts.length} {contacts.length === 1 ? 'Contact' : 'Contacts'}
+                        {visibleContacts.length} {visibleContacts.length === 1 ? 'Contact' : 'Contacts'}
                     </Text>
                 </View>
             </View>
@@ -163,11 +172,18 @@ export default function DirectoryDivisionScreen() {
                 </View>
             ) : (
                 <FlatList
-                    data={contacts}
+                    data={visibleContacts}
                     renderItem={renderContactItem}
                     keyExtractor={(item) => item.id}
                     style={{ flex: 1 }}
                     contentContainerStyle={styles.listContent}
+                    ListHeaderComponent={
+                        visibleContacts.length > 0 ? (
+                            <View style={{ paddingBottom: 10, alignItems: 'center' }}>
+                                <Text style={{ fontSize: 11, color: colors.icon }}>💡 Press and hold any member card to report or block</Text>
+                            </View>
+                        ) : null
+                    }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
                             <Text style={[styles.emptyText, { color: colors.icon }]}>No contacts found for this division.</Text>

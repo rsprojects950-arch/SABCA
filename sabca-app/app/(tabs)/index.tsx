@@ -9,10 +9,11 @@ import QRCode from 'react-native-qrcode-svg';
 import { CheckCircle2, Circle } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, LogOut, QrCode, Share2, Edit3, Smartphone, Mail, Briefcase, MapPin, RefreshCw, Download, FileText, Clock, User, X, FileImage, FileText as FilePdf, AlertTriangle, Eye, EyeOff, Lock, ShieldCheck, Moon, Trash2, HelpCircle, ChevronRight } from 'lucide-react-native';
+import { Bell, LogOut, QrCode, Share2, Edit3, Smartphone, Mail, Briefcase, MapPin, RefreshCw, Download, FileText, Clock, User, X, FileImage, FileText as FilePdf, AlertTriangle, Eye, EyeOff, Lock, ShieldCheck, Moon, Trash2, HelpCircle, ChevronRight, UserX } from 'lucide-react-native';
 
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../ctx/AuthContext';
+import { useModeration } from '../../ctx/ModerationContext';
 import { BlurView } from 'expo-blur';
 import { supabase } from '../../lib/supabase';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -1246,8 +1247,8 @@ export default function ProfileScreen() {
             style={styles.infoListGradient}
           >
             <View style={[styles.infoList, { backgroundColor: colors.card }]}>
-              <InfoItem icon={Smartphone} label={profile?.phone || "+91 98765 43210"} color={colors.text} iconColor={colors.icon} />
-              <InfoItem icon={Mail} label={user?.email || "email@example.com"} color={colors.text} iconColor={colors.icon} />
+              <InfoItem icon={Smartphone} label={profile?.phone || "Not provided"} color={colors.text} iconColor={colors.icon} />
+              <InfoItem icon={Mail} label={user?.email || "Not provided"} color={colors.text} iconColor={colors.icon} />
               <InfoItem icon={Briefcase} label={profile?.company_name || "Add Company Name"} color={colors.text} iconColor={colors.icon} />
               <InfoItem icon={MapPin} label={profile?.location || "Add Location"} color={colors.text} iconColor={colors.icon} />
               <InfoItem icon={FileText} label={profile?.gst_number || "Add GST Number"} color={colors.text} iconColor={colors.icon} />
@@ -1382,6 +1383,7 @@ export default function ProfileScreen() {
 const SecuritySection = () => {
   const { isBiometricEnabled, setBiometricEnabled, user, deleteAccount } = useAuth();
   const { isBiometricSupported, isBiometricEnrolled, authenticate } = useBiometrics();
+  const { blockedUserIds, unblockUser } = useModeration();
   const { colors, isDark, toggleTheme } = useTheme();
   const { mediumImpact, heavyImpact } = useHaptics();
   const { t } = useTranslation();
@@ -1397,6 +1399,9 @@ const SecuritySection = () => {
 
   // Help & Support Modal State
   const [supportModalVisible, setSupportModalVisible] = useState(false);
+
+  // Blocked Members Modal State
+  const [blockedModalVisible, setBlockedModalVisible] = useState(false);
 
   const handleOpenEmail = (email: string) => {
     Linking.openURL(`mailto:${email}`).catch(() => {
@@ -1449,7 +1454,7 @@ const SecuritySection = () => {
     setVerifying(true);
     try {
       // Verify password with Supabase
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: user?.email || '',
         password: password,
       });
@@ -1459,7 +1464,9 @@ const SecuritySection = () => {
       // Authenticate with Biometrics
       const success = await authenticate('Enable Biometric Login');
       if (success) {
-        await setBiometricEnabled(true, { email: user?.email || '', pass: password });
+        const refreshToken = data.session?.refresh_token;
+        if (!refreshToken) throw new Error('Failed to retrieve session refresh token');
+        await setBiometricEnabled(true, refreshToken);
         setModalVisible(false);
         setPassword('');
         Alert.alert(t('common.success'), t('profile.security.successEnabled'));
@@ -1538,6 +1545,37 @@ const SecuritySection = () => {
                 Association & technical assistance
               </Text>
             </View>
+            <ChevronRight size={18} color={colors.icon} />
+          </TouchableOpacity>
+
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 8 }} />
+
+          {/* Blocked Members */}
+          <TouchableOpacity
+            style={styles.securityItem}
+            onPress={() => {
+              mediumImpact();
+              setBlockedModalVisible(true);
+            }}
+          >
+            <View style={[styles.infoIconBox, { backgroundColor: colors.background }]}>
+              <UserX size={20} color={colors.icon} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.securityTitle, { color: colors.text }]}>
+                Blocked Members
+              </Text>
+              <Text style={[styles.securityDesc, { color: colors.icon }]}>
+                {blockedUserIds.length === 0
+                  ? 'No blocked members'
+                  : `${blockedUserIds.length} ${blockedUserIds.length === 1 ? 'member' : 'members'} blocked`}
+              </Text>
+            </View>
+            {blockedUserIds.length > 0 && (
+              <View style={[styles.badge, { position: 'relative', top: 0, right: 0, marginRight: 8, backgroundColor: isDark ? '#334155' : '#E2E8F0', borderColor: 'transparent' }]}>
+                <Text style={[styles.badgeText, { color: colors.text }]}>{blockedUserIds.length}</Text>
+              </View>
+            )}
             <ChevronRight size={18} color={colors.icon} />
           </TouchableOpacity>
 
@@ -1806,6 +1844,90 @@ const SecuritySection = () => {
           </View>
         </Pressable>
       </Modal>
+
+      {/* Blocked Members Modal */}
+      <Modal visible={blockedModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setBlockedModalVisible(false)}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, maxHeight: '80%' }]} onStartShouldSetResponder={() => true}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, width: '100%' }}>
+              <Text style={[styles.modalTitle, { color: colors.text, marginBottom: 0 }]}>Blocked Members</Text>
+              <TouchableOpacity onPress={() => setBlockedModalVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <X size={22} color={colors.icon} />
+              </TouchableOpacity>
+            </View>
+            <Text style={[styles.modalSubtitle, { color: colors.icon, marginBottom: 16 }]}>
+              Blocked members cannot contact you and are hidden from your committee and directory views.
+            </Text>
+
+            {blockedUserIds.length === 0 ? (
+              <View style={{ paddingVertical: 24, alignItems: 'center', width: '100%' }}>
+                <UserX size={40} color={colors.icon} style={{ opacity: 0.5, marginBottom: 8 }} />
+                <Text style={{ color: colors.icon, fontSize: 14 }}>You haven't blocked any members.</Text>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 300, width: '100%' }}>
+                {blockedUserIds.map((blockedId) => (
+                  <View
+                    key={blockedId}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      paddingVertical: 12,
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.border,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 18,
+                          backgroundColor: colors.background,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <User size={18} color={colors.icon} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600' }} numberOfLines={1}>
+                          Member #{blockedId}
+                        </Text>
+                        <Text style={{ color: colors.icon, fontSize: 12 }}>Blocked</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 8,
+                        backgroundColor: colors.background,
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                      }}
+                      onPress={() => {
+                        mediumImpact();
+                        unblockUser(blockedId);
+                      }}
+                    >
+                      <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Unblock</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            <TouchableOpacity
+              style={[styles.modalBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9', marginTop: 16, width: '100%' }]}
+              onPress={() => setBlockedModalVisible(false)}
+            >
+              <Text style={[styles.cancelBtnText, { color: colors.text }]}>{t('common.close', 'Close')}</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 };
@@ -1874,7 +1996,7 @@ const PoweredByTile = () => {
     <TouchableOpacity
       onPress={() => {
         lightImpact();
-        Linking.openURL('https://infraxpert.com');
+        Linking.openURL('https://infraxpert.in/');
       }}
       activeOpacity={0.8}
     >

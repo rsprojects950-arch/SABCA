@@ -278,7 +278,7 @@ export const generateReceiptPDF = async (transaction: Transaction, user: UserPro
         <div class="footer-row">
             <div class="terms">
                 <h3>Payment Terms:</h3>
-                <p>For inquiries, contact support@infraxpert.in or +91-9876543210.</p>
+                <p>For inquiries, contact support@infraxpert.in.</p>
                 <p>This is a computer generated receipt.</p>
             </div>
             <div class="auth-sign">
@@ -297,7 +297,6 @@ export const generateReceiptPDF = async (transaction: Transaction, user: UserPro
     </div>
 
     <div class="bottom-bar">
-        <span>+91-9876543210</span>
         <span>www.sabca.org</span>
         <span>support@infraxpert.in</span>
         <span>Andhra Pradesh, India</span>

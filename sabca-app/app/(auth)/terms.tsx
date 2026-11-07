@@ -65,8 +65,11 @@ export default function TermsAndConditions() {
                         <Text style={[styles.bullet, { color: isDark ? '#94A3B8' : '#475569' }]}>•</Text>
                         <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>Use automated systems (bots/scrapers) to access the App without permission.</Text>
                     </View>
-                    <Text style={[styles.text, { color: isDark ? '#FCA5A5' : '#DC2626', fontWeight: '600', marginTop: 10 }]}>
-                        Zero Tolerance Policy: SABCA maintains a strict zero-tolerance policy against objectionable content, harassment, and abusive behavior. Any accounts engaging in such behavior will be immediately suspended or permanently terminated without notice.
+                    <Text style={[styles.text, { color: isDark ? '#FCA5A5' : '#DC2626', fontWeight: 'bold', marginTop: 12 }]}>
+                        Zero-Tolerance Policy for Objectionable Content and Abusive Behavior (Apple Guideline 1.2):
+                    </Text>
+                    <Text style={[styles.text, { color: isDark ? '#FCA5A5' : '#DC2626', marginTop: 4 }]}>
+                        SABCA maintains a strict zero-tolerance policy against objectionable content, harassment, and abusive behavior. Users may report any member profile or block members directly within the app. All user reports are reviewed within 24 hours by our moderation committee, and confirmed violations will result in immediate termination of association access and account removal.
                     </Text>
                 </View>
 

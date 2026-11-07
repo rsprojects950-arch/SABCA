@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import * as SecureStore from 'expo-secure-store';
 import { supabase } from '../lib/supabase';
 
 type AuthContextType = {
@@ -7,12 +8,12 @@ type AuthContextType = {
     user: User | null;
     isLoading: boolean;
     isAdmin: boolean;
-    userRole: string | null; // Add userRole
+    userRole: string | null;
     isProfileComplete: boolean;
     isMembershipActive: boolean;
     refreshProfile?: () => Promise<void>;
     isBiometricEnabled: boolean;
-    setBiometricEnabled: (enabled: boolean, credentials?: { email: string; pass: string }) => Promise<void>;
+    setBiometricEnabled: (enabled: boolean, refreshToken?: string) => Promise<void>;
     signInWithBiometrics: () => Promise<{ data: { session: Session | null; user: User | null }; error: any }>;
     deleteAccount: () => Promise<{ error: any }>;
 };
@@ -33,26 +34,35 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-import * as SecureStore from 'expo-secure-store';
-
 const BIOMETRIC_KEY = 'BIOMETRIC_ENABLED';
-const CREDENTIALS_KEY = 'USER_CREDENTIALS';
+const REFRESH_TOKEN_KEY = 'BIOMETRIC_REFRESH_TOKEN';
+const LEGACY_CREDENTIALS_KEY = 'USER_CREDENTIALS';
+
+const SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
+    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+};
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [userRole, setUserRole] = useState<string | null>(null); // Add state
+    const [userRole, setUserRole] = useState<string | null>(null);
     const [isProfileComplete, setIsProfileComplete] = useState(true);
     const [isMembershipActive, setIsMembershipActive] = useState(true);
     const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
 
     useEffect(() => {
+        // Purge legacy plaintext credentials to ensure MASVS-STORAGE compliance
+        SecureStore.deleteItemAsync(LEGACY_CREDENTIALS_KEY).catch(() => {});
+
         // Load Biometric Preference
-        SecureStore.getItemAsync(BIOMETRIC_KEY).then(val => {
+        SecureStore.getItemAsync(BIOMETRIC_KEY, SECURE_STORE_OPTIONS).then(val => {
             setIsBiometricEnabled(val === 'true');
+        }).catch(() => {
+            setIsBiometricEnabled(false);
         });
+
         supabase.auth.getSession().then(({ data: { session }, error }) => {
             if (error) {
                 console.error("Auth Session Error:", error);
@@ -73,11 +83,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setIsLoading(false);
         });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            checkUser(session?.user);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+            setSession(newSession);
+            setUser(newSession?.user ?? null);
+            checkUser(newSession?.user);
             setIsLoading(false);
+
+            // Refresh Token Rotation: keep stored token in sync with new sessions
+            if (newSession?.refresh_token) {
+                try {
+                    const isBio = await SecureStore.getItemAsync(BIOMETRIC_KEY, SECURE_STORE_OPTIONS);
+                    if (isBio === 'true') {
+                        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newSession.refresh_token, SECURE_STORE_OPTIONS);
+                    }
+                } catch {
+                    // Non-critical token sync issue
+                }
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -116,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         const role = data?.role;
-        setUserRole(role); // Set role
+        setUserRole(role);
 
         const isAdminRole = role === 'admin' || role === 'moderator';
         setIsAdmin(isAdminRole);
@@ -150,17 +172,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-    const setBiometricEnabled = async (enabled: boolean, credentials?: { email: string; pass: string }) => {
+    const setBiometricEnabled = async (enabled: boolean, refreshToken?: string) => {
         try {
-            if (enabled && credentials) {
-                // Encrypt and store credentials
-                await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify(credentials));
-                await SecureStore.setItemAsync(BIOMETRIC_KEY, 'true');
+            if (enabled && refreshToken) {
+                // Store Supabase refresh token with device-unlocked keychain protection
+                await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken, SECURE_STORE_OPTIONS);
+                await SecureStore.setItemAsync(BIOMETRIC_KEY, 'true', SECURE_STORE_OPTIONS);
+                await SecureStore.deleteItemAsync(LEGACY_CREDENTIALS_KEY).catch(() => {});
                 setIsBiometricEnabled(true);
             } else {
-                // Clear storage
-                await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
-                await SecureStore.setItemAsync(BIOMETRIC_KEY, 'false');
+                // Clear biometric session
+                await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY, SECURE_STORE_OPTIONS).catch(() => {});
+                await SecureStore.setItemAsync(BIOMETRIC_KEY, 'false', SECURE_STORE_OPTIONS);
+                await SecureStore.deleteItemAsync(LEGACY_CREDENTIALS_KEY).catch(() => {});
                 setIsBiometricEnabled(false);
             }
         } catch (error) {
@@ -170,16 +194,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const signInWithBiometrics = async () => {
         try {
-            const credsJson = await SecureStore.getItemAsync(CREDENTIALS_KEY);
-            if (!credsJson) throw new Error('No stored credentials found. Please log in normally once.');
+            const refreshToken = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY, SECURE_STORE_OPTIONS);
+            if (!refreshToken) {
+                throw new Error('No biometric session found. Please log in normally once.');
+            }
 
-            const { email, pass } = JSON.parse(credsJson);
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password: pass,
+            const { data, error } = await supabase.auth.setSession({
+                refresh_token: refreshToken,
+                access_token: '',
             });
 
-            if (error) throw error;
+            if (error) {
+                // Token has expired or been revoked on the server
+                await setBiometricEnabled(false);
+                throw new Error('Biometric session expired. Please log in with your credentials.');
+            }
+
+            // Save rotated refresh token
+            if (data.session?.refresh_token) {
+                await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.session.refresh_token, SECURE_STORE_OPTIONS);
+            }
+
             return { data, error: null };
         } catch (error: any) {
             console.error('Biometric sign-in error:', error);
@@ -213,8 +248,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             // 3. Clean up biometrics & secure store
             try {
-                await SecureStore.deleteItemAsync(BIOMETRIC_KEY);
-                await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+                await SecureStore.deleteItemAsync(BIOMETRIC_KEY, SECURE_STORE_OPTIONS).catch(() => {});
+                await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY, SECURE_STORE_OPTIONS).catch(() => {});
+                await SecureStore.deleteItemAsync(LEGACY_CREDENTIALS_KEY).catch(() => {});
             } catch (secErr) {
                 console.warn('Secure store cleanup error:', secErr);
             }
@@ -239,7 +275,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         isLoading,
         isAdmin,
-        userRole, // Expose role
+        userRole,
         isProfileComplete,
         isMembershipActive,
         refreshProfile,

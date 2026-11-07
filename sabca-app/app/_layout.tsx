@@ -14,6 +14,7 @@ import { queryClient } from '../lib/react-query';
 import { ThemeProvider } from '../ctx/ThemeContext';
 
 import { LanguageProvider } from '../ctx/LanguageContext';
+import { ModerationProvider } from '../ctx/ModerationContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../lib/i18n';
 
@@ -105,8 +106,10 @@ export default function RootLayout() {
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
-              <StatusBar style="auto" />
-              <InitialLayout />
+              <ModerationProvider>
+                <StatusBar style="auto" />
+                <InitialLayout />
+              </ModerationProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
