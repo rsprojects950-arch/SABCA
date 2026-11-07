@@ -20,13 +20,13 @@ export default function Signup() {
     const router = useRouter();
 
     async function signUpWithEmail() {
-        if (!email || !password || !fullName || !confirmPassword || !phone) {
-            Alert.alert('Error', 'Please fill in all fields');
+        if (!email || !password || !fullName || !confirmPassword) {
+            Alert.alert('Error', 'Please fill in all required fields (Name, Email, Password).');
             return;
         }
 
-        if (phone.length !== 10) {
-            Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+        if (phone && phone.length !== 10) {
+            Alert.alert('Error', 'Please enter a valid 10-digit mobile number, or leave it blank.');
             return;
         }
 
@@ -44,12 +44,12 @@ export default function Signup() {
 
         // 1. Sign up the user (create auth user)
         const { data: { session, user }, error } = await supabase.auth.signUp({
-            email,
+            email: email.trim().toLowerCase(),
             password,
             options: {
                 data: {
-                    full_name: fullName,
-                    phone: '+91' + phone,
+                    full_name: fullName.trim(),
+                    phone: phone ? '+91' + phone.trim() : null,
                 }
             }
         });
@@ -112,7 +112,7 @@ export default function Signup() {
                         <Text style={styles.prefixText}>+91</Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Mobile Number"
+                            placeholder="Mobile Number (Optional)"
                             placeholderTextColor="#AAC"
                             value={phone}
                             onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
@@ -120,6 +120,7 @@ export default function Signup() {
                             maxLength={10}
                         />
                     </View>
+                    <Text style={styles.phoneHelperText}>Optional: Used for state contractor verification & ID card</Text>
 
                     <View style={styles.inputContainer}>
                         <Mail size={20} color="#E2E8F0" style={styles.icon} />
@@ -252,9 +253,11 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     formContainer: {
-        marginHorizontal: 30,
-        borderRadius: 20,
-        padding: 20,
+        width: '90%',
+        maxWidth: 400,
+        alignSelf: 'center',
+        borderRadius: 24,
+        padding: 22,
         overflow: 'hidden',
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
@@ -367,5 +370,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginRight: 8,
         fontWeight: '600',
+    },
+    phoneHelperText: {
+        color: '#CBD5E1',
+        fontSize: 12,
+        marginTop: -8,
+        marginBottom: 12,
+        marginHorizontal: 4,
+        opacity: 0.9,
     },
 });

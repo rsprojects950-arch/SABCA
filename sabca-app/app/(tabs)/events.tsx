@@ -924,6 +924,9 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 20,
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     emptyText: {
         textAlign: 'center',
@@ -1197,6 +1200,8 @@ const styles = StyleSheet.create({
     },
     modalContent: {
         width: '85%',
+        maxWidth: 480,
+        alignSelf: 'center',
         backgroundColor: '#FFF',
         borderRadius: 20,
         padding: 24,

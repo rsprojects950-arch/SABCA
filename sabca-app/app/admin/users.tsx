@@ -361,7 +361,7 @@ const AdminUsersScreen = () => {
     const renderUserItem = ({ item }: { item: any }) => (
         <View style={[styles.userCard, { backgroundColor: colors.card, shadowColor: colors.shadow }]}>
             <View style={styles.userHeader}>
-                <Image source={{ uri: item.avatar_url || 'https://i.pravatar.cc/150?img=12' }} style={[styles.avatar, { backgroundColor: colors.background }]} />
+                <Image source={item.avatar_url ? { uri: item.avatar_url } : require('../../assets/images/app_icon_round.jpg')} style={[styles.avatar, { backgroundColor: colors.background }]} />
                 <View style={styles.userInfo}>
                     <Text style={[styles.userName, { color: colors.text }]}>{item.full_name || 'No Name'}</Text>
                     <Text style={[styles.userEmail, { color: colors.icon }]}>{item.email}</Text>

@@ -27,6 +27,7 @@ const InitialLayout = () => {
 
     const inAuthGroup = segments[0] === '(auth)';
     const isResetPassword = segments[1] === 'reset-password';
+    const isPublicLegal = segments[1] === 'privacy' || segments[1] === 'terms';
     const inOnboardingGroup = segments[0] === 'onboarding';
 
     if (!session && !inAuthGroup) {
@@ -38,7 +39,7 @@ const InitialLayout = () => {
         if (!inOnboardingGroup) {
           router.replace('/onboarding');
         }
-      } else if ((inAuthGroup || inOnboardingGroup) && !isResetPassword) {
+      } else if ((inAuthGroup || inOnboardingGroup) && !isResetPassword && !isPublicLegal) {
         // Logged in and complete -> Tabs
         router.replace('/(tabs)');
       }

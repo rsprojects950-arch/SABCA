@@ -475,6 +475,9 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     card: {
         backgroundColor: Colors.light.card,

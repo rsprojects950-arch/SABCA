@@ -9,7 +9,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { CheckCircle2, Circle } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, LogOut, QrCode, Share2, Edit3, Smartphone, Mail, Briefcase, MapPin, RefreshCw, Download, FileText, Clock, User, X, FileImage, FileText as FilePdf, AlertTriangle, Eye, EyeOff, Lock, ShieldCheck, Moon, Trash2 } from 'lucide-react-native';
+import { Bell, LogOut, QrCode, Share2, Edit3, Smartphone, Mail, Briefcase, MapPin, RefreshCw, Download, FileText, Clock, User, X, FileImage, FileText as FilePdf, AlertTriangle, Eye, EyeOff, Lock, ShieldCheck, Moon, Trash2, HelpCircle, ChevronRight } from 'lucide-react-native';
 
 import { Colors } from '../../constants/Colors';
 import { useAuth } from '../../ctx/AuthContext';
@@ -34,6 +34,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -387,6 +390,8 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
     backgroundColor: '#FFF',
     borderRadius: 24,
     padding: 24,
@@ -840,6 +845,7 @@ export default function ProfileScreen() {
     const statusColor = status === 'Active' ? Colors.light.success : Colors.light.notification;
     // Use a public API for QR code image in PDF since we can't easily inline the React component
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrValue)}`;
+    const defaultAvatarSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23CBD5E1'/><circle cx='50' cy='40' r='20' fill='%2364748B'/><path d='M 20 85 C 20 65, 80 65, 80 85 Z' fill='%2364748B'/></svg>";
 
     return `
       <html>
@@ -891,7 +897,7 @@ export default function ProfileScreen() {
                 </div>
               </div>
               <div class="avatar-box">
-                <img src="${profile?.avatar_url || 'https://i.pravatar.cc/150?img=12'}" class="avatar-img" />
+                <img src="${profile?.avatar_url || defaultAvatarSvg}" class="avatar-img" />
               </div>
             </div>
             <div class="content-bottom" style="display: flex; flex-direction: row; justify-content: space-between; align-items: flex-end; padding: 0 4mm 3.5mm 4mm; width: 100%; position: absolute; bottom: 0; box-sizing: border-box;">
@@ -1118,7 +1124,7 @@ export default function ProfileScreen() {
               {/* Avatar Right */}
               <View style={{ width: mm(13.5), alignItems: 'flex-end', paddingTop: 0, marginTop: mm(0), marginRight: mm(4) }}>
                 <Image
-                  source={profile?.avatar_url || user?.user_metadata?.avatar_url || 'https://i.pravatar.cc/150?img=12'}
+                  source={profile?.avatar_url || user?.user_metadata?.avatar_url || require('../../assets/images/app_icon_round.jpg')}
                   style={{ width: mm(13.5), height: mm(13.5), borderRadius: mm(13.5) / 2, borderWidth: mm(0.15), borderColor: '#175b8e', backgroundColor: '#E2E8F0' }}
                   contentFit="cover"
                   transition={500}
@@ -1389,6 +1395,15 @@ const SecuritySection = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
+  // Help & Support Modal State
+  const [supportModalVisible, setSupportModalVisible] = useState(false);
+
+  const handleOpenEmail = (email: string) => {
+    Linking.openURL(`mailto:${email}`).catch(() => {
+      Alert.alert(t('common.error', 'Error'), 'Unable to open email client.');
+    });
+  };
+
   const handleDeleteAccount = async () => {
     heavyImpact();
     setDeletingAccount(true);
@@ -1501,6 +1516,78 @@ const SecuritySection = () => {
               ios_backgroundColor={colors.border}
             />
           </View>
+
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 8 }} />
+
+          {/* Help & Support */}
+          <TouchableOpacity
+            style={styles.securityItem}
+            onPress={() => {
+              mediumImpact();
+              setSupportModalVisible(true);
+            }}
+          >
+            <View style={[styles.infoIconBox, { backgroundColor: colors.background }]}>
+              <HelpCircle size={20} color={colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.securityTitle, { color: colors.text }]}>
+                {t('profile.helpSupport', 'Help & Support')}
+              </Text>
+              <Text style={[styles.securityDesc, { color: colors.icon }]}>
+                Association & technical assistance
+              </Text>
+            </View>
+            <ChevronRight size={18} color={colors.icon} />
+          </TouchableOpacity>
+
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 8 }} />
+
+          {/* Privacy Policy */}
+          <TouchableOpacity
+            style={styles.securityItem}
+            onPress={() => {
+              mediumImpact();
+              router.push('/(auth)/privacy');
+            }}
+          >
+            <View style={[styles.infoIconBox, { backgroundColor: colors.background }]}>
+              <FileText size={20} color={colors.icon} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.securityTitle, { color: colors.text }]}>
+                {t('profile.privacyPolicy', 'Privacy Policy')}
+              </Text>
+              <Text style={[styles.securityDesc, { color: colors.icon }]}>
+                Data protection & privacy terms
+              </Text>
+            </View>
+            <ChevronRight size={18} color={colors.icon} />
+          </TouchableOpacity>
+
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 8 }} />
+
+          {/* Terms & Conditions */}
+          <TouchableOpacity
+            style={styles.securityItem}
+            onPress={() => {
+              mediumImpact();
+              router.push('/(auth)/terms');
+            }}
+          >
+            <View style={[styles.infoIconBox, { backgroundColor: colors.background }]}>
+              <FileText size={20} color={colors.icon} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.securityTitle, { color: colors.text }]}>
+                {t('profile.termsOfService', 'Terms & Conditions')}
+              </Text>
+              <Text style={[styles.securityDesc, { color: colors.icon }]}>
+                EULA & association usage terms
+              </Text>
+            </View>
+            <ChevronRight size={18} color={colors.icon} />
+          </TouchableOpacity>
 
           <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 8 }} />
 
@@ -1631,6 +1718,91 @@ const SecuritySection = () => {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Help & Support Modal */}
+      <Modal visible={supportModalVisible} transparent animationType="fade">
+        <Pressable style={styles.modalOverlay} onPress={() => setSupportModalVisible(false)}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]} onStartShouldSetResponder={() => true}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                <HelpCircle size={30} color={colors.primary} />
+              </View>
+              <Text style={[styles.modalTitle, { color: colors.text, textAlign: 'center' }]}>
+                {t('profile.helpSupport', 'Help & Support')}
+              </Text>
+              <Text style={[styles.modalSubtitle, { color: colors.icon, textAlign: 'center', marginTop: 4, lineHeight: 18 }]}>
+                For assistance, feedback, or reporting issues, reach out to our team:
+              </Text>
+            </View>
+
+            <View style={{ width: '100%', gap: 10, marginVertical: 8 }}>
+              {/* Association Support */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  padding: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+                onPress={() => handleOpenEmail('statecoordinator@sabca.co.in')}
+              >
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9', justifyContent: 'center', alignItems: 'center' }}>
+                  <Mail size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>Association Coordinator</Text>
+                  <Text style={{ fontSize: 12, color: colors.icon, marginTop: 2 }}>statecoordinator@sabca.co.in</Text>
+                </View>
+                <ChevronRight size={18} color={colors.icon} />
+              </TouchableOpacity>
+
+              {/* Technical Support */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  padding: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                }}
+                onPress={() => handleOpenEmail('support@infraxpert.in')}
+              >
+                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9', justifyContent: 'center', alignItems: 'center' }}>
+                  <Mail size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>Technical & App Support</Text>
+                  <Text style={{ fontSize: 12, color: colors.icon, marginTop: 2 }}>support@infraxpert.in</Text>
+                </View>
+                <ChevronRight size={18} color={colors.icon} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={{
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F1F5F9',
+                width: '100%',
+                paddingVertical: 12,
+                borderRadius: 12,
+                alignItems: 'center',
+                marginTop: 10,
+              }}
+              onPress={() => setSupportModalVisible(false)}
+            >
+              <Text style={{ color: colors.text, fontWeight: '600', fontSize: 14 }}>
+                {t('common.close', 'Close')}
+              </Text>
+            </TouchableOpacity>
           </View>
         </Pressable>
       </Modal>

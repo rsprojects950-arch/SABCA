@@ -204,7 +204,7 @@ export default function MembershipManagementScreen() {
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardHeader}>
                     <View style={styles.cardHeaderLeft}>
-                        <Image source={{ uri: item.avatar_url || 'https://i.pravatar.cc/150?img=12' }} style={[styles.avatar, { backgroundColor: colors.background }]} />
+                        <Image source={item.avatar_url ? { uri: item.avatar_url } : require('../../assets/images/app_icon_round.jpg')} style={[styles.avatar, { backgroundColor: colors.background }]} />
                         <View style={styles.headerInfo}>
                             <Text style={[styles.name, { color: colors.text }]}>{item.full_name}</Text>
                             <Text style={[styles.idText, { color: colors.icon }]}>{item.sabca_id || 'ID Pending'}</Text>

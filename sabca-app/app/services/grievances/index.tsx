@@ -459,6 +459,9 @@ const styles = StyleSheet.create({
         padding: 20,
         paddingBottom: 100,
         paddingTop: 24,
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     emptyContainer: {
         padding: 40,

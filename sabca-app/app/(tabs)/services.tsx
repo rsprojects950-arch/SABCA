@@ -211,6 +211,9 @@ const styles = StyleSheet.create({
     scrollContent: {
         padding: 20,
         paddingBottom: 100, // Increased to avoid tab bar overlap
+        maxWidth: 680,
+        width: '100%',
+        alignSelf: 'center',
     },
     cardGradientBorder: {
         borderRadius: 22, // Slightly larger than inner card

@@ -53,13 +53,13 @@ export default function OnboardingScreen() {
     };
 
     const handleCompleteProfile = async () => {
-        if (!fullName || !division || !phone) {
-            Alert.alert('Missing Details', 'Please fill in Name, Division, and Phone Number to continue.');
+        if (!fullName || !division) {
+            Alert.alert('Missing Details', 'Please fill in your Name and Division to continue.');
             return;
         }
 
-        if (phone.length < 10) {
-            Alert.alert('Invalid Phone', 'Please enter a valid 10-digit mobile number.');
+        if (phone && phone.length < 10) {
+            Alert.alert('Invalid Phone', 'Please enter a valid 10-digit mobile number, or leave it blank.');
             return;
         }
 
@@ -68,9 +68,9 @@ export default function OnboardingScreen() {
         try {
             const updates = {
                 id: user!.id,
-                full_name: fullName,
+                full_name: fullName.trim(),
                 division: division,
-                phone: `+91${phone}`, // Store with code
+                phone: phone ? `+91${phone.trim()}` : null,
                 location: location,
                 sabca_id: null, // Allow trigger to generate ID
                 updated_at: new Date(),
@@ -162,7 +162,7 @@ export default function OnboardingScreen() {
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={[styles.label, { color: colors.text }]}>Phone Number <Text style={styles.required}>*</Text></Text>
+                        <Text style={[styles.label, { color: colors.text }]}>Phone Number <Text style={{ fontSize: 13, fontWeight: 'normal', color: colors.icon }}>(Optional)</Text></Text>
                         <View style={[styles.inputWrapper, { backgroundColor: colors.background, borderColor: colors.border }]}>
                             <Phone size={20} color={colors.icon} style={styles.icon} />
                             <View style={styles.countryCode}>
@@ -171,7 +171,7 @@ export default function OnboardingScreen() {
                             <View style={[styles.verticalDivider, { backgroundColor: colors.border }]} />
                             <TextInput
                                 style={[styles.input, { color: colors.text }]}
-                                placeholder="Mobile Number"
+                                placeholder="Mobile Number (Optional)"
                                 value={phone}
                                 onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
                                 keyboardType="phone-pad"
@@ -281,6 +281,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     formCard: {
+        maxWidth: 500,
+        width: '100%',
+        alignSelf: 'center',
         borderRadius: 24,
         padding: 24,
         shadowOffset: { width: 0, height: 10 },
@@ -351,9 +354,13 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         justifyContent: 'center',
+        alignItems: 'center',
         padding: 20,
     },
     pickerContainer: {
+        maxWidth: 480,
+        width: '100%',
+        alignSelf: 'center',
         borderRadius: 20,
         maxHeight: '70%',
         overflow: 'hidden',

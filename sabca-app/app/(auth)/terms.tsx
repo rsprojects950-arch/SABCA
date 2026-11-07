@@ -15,7 +15,7 @@ export default function TermsAndConditions() {
             <Stack.Screen options={{ headerShown: false }} />
 
             <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F1F5F9' }]}>
+                <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)')} style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F1F5F9' }]}>
                     <ChevronLeft size={24} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>Terms and Conditions</Text>
@@ -36,7 +36,7 @@ export default function TermsAndConditions() {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>2. Eligibility and Registration</Text>
                     <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>
-                        You must be at least 13 years of age (or the legal age in your jurisdiction) to use this App.
+                        You must be at least 18 years of age (or the legal age of majority in your jurisdiction) to use this App.
                     </Text>
                     <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>
                         You agree to provide accurate, current, and complete information during the registration process.
@@ -55,7 +55,7 @@ export default function TermsAndConditions() {
                     </View>
                     <View style={styles.bulletPoint}>
                         <Text style={[styles.bullet, { color: isDark ? '#94A3B8' : '#475569' }]}>•</Text>
-                        <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>Post or transmit any content that is defamatory, obscene, or promotes violence/discrimination.</Text>
+                        <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>Post, upload, or transmit any content that is objectionable, defamatory, obscene, or promotes violence/discrimination.</Text>
                     </View>
                     <View style={styles.bulletPoint}>
                         <Text style={[styles.bullet, { color: isDark ? '#94A3B8' : '#475569' }]}>•</Text>
@@ -65,6 +65,9 @@ export default function TermsAndConditions() {
                         <Text style={[styles.bullet, { color: isDark ? '#94A3B8' : '#475569' }]}>•</Text>
                         <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>Use automated systems (bots/scrapers) to access the App without permission.</Text>
                     </View>
+                    <Text style={[styles.text, { color: isDark ? '#FCA5A5' : '#DC2626', fontWeight: '600', marginTop: 10 }]}>
+                        Zero Tolerance Policy: SABCA maintains a strict zero-tolerance policy against objectionable content, harassment, and abusive behavior. Any accounts engaging in such behavior will be immediately suspended or permanently terminated without notice.
+                    </Text>
                 </View>
 
                 <View style={styles.section}>
@@ -111,7 +114,10 @@ export default function TermsAndConditions() {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>9. Contact Us</Text>
                     <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>
-                        For any questions regarding these Terms, please contact: support@infraxpert.in
+                        For association inquiries, contact: statecoordinator@sabca.co.in
+                    </Text>
+                    <Text style={[styles.text, { color: isDark ? '#94A3B8' : '#475569' }]}>
+                        For technical support and app inquiries, contact: support@infraxpert.in
                     </Text>
                 </View>
 
@@ -143,6 +149,9 @@ const styles = StyleSheet.create({
     },
     content: {
         padding: 20,
+        maxWidth: 720,
+        width: '100%',
+        alignSelf: 'center',
     },
     title: {
         fontSize: 24,

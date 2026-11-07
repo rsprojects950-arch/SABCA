@@ -10,10 +10,15 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "requireFullScreen": true,
       "bundleIdentifier": "com.infraxpert.sabca",
+      "buildNumber": "4",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "SABCA App uses Face ID to provide secure and convenient access to your account.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSFaceIDUsageDescription": "SABCA uses Face ID or Touch ID to provide secure, biometric authentication into your member account.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "SABCA needs camera access so you can take and upload a profile photo and capture photos when submitting grievance documentation.",
+        "NSPhotoLibraryUsageDescription": "SABCA needs access to your photo library to allow you to select and upload your profile picture and grievance attachments.",
+        "NSPhotoLibraryAddUsageDescription": "SABCA needs permission to save your digital member ID card directly to your photo library."
       }
     },
     "android": {
@@ -27,6 +32,15 @@
       "versionCode": 4
     },
     "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "15.1",
+            "supportsSceneLifecycle": true
+          }
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
