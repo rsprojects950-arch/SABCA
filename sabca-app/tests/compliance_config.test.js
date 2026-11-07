@@ -100,3 +100,4 @@ test('Apple Compliance: Project Configurations & iPad Universal Support', async 
         assert(pbxproj.includes('IPHONEOS_DEPLOYMENT_TARGET = 15.1;'), 'Deployment target must be 15.1');
     });
 });
+

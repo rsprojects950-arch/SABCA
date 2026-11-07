@@ -131,3 +131,4 @@ describe('Apple Guideline 2.1 - App Completeness & Production Readiness', () => 
         assert.ok(content.length > 500, 'Terms screen must have substantive legal terms');
     });
 });
+

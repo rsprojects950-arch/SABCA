@@ -80,3 +80,4 @@ describe('Apple Guideline 5.1.1(v) - Account Deletion Architecture', () => {
         assert.ok(content.includes('deleteAccount()'), 'Must call deleteAccount on cancellation');
     });
 });
+

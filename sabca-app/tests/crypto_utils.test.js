@@ -119,3 +119,4 @@ test('Cryptographic Utility: Member Pass QR Code Signatures', async (t) => {
         assert.notStrictEqual(sigOriginal, sigTamperedId, 'Altered sabcaId must yield different signature');
     });
 });
+

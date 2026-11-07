@@ -33,3 +33,4 @@ test('Auth & Biometric Security (OWASP MASVS & Apple Guideline 1.6)', async (t) 
         assert(authCode.includes('newSession?.refresh_token'), 'Missing token rotation sync on session update');
     });
 });
+
