@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } fr
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { UserPlus, BookOpen, Scale, Banknote, HardHat, Building2, ArrowUpRight, Phone, MessageSquare, AlertCircle, Clock, Plus } from 'lucide-react-native';
+import { UserPlus, BookOpen, Scale, Banknote, HardHat, Building2, ArrowUpRight, Phone, MessageSquare, AlertCircle, Clock, Plus, ChevronRight } from 'lucide-react-native';
 import { Colors } from '../../constants/Colors';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../ctx/AuthContext';
@@ -48,6 +48,8 @@ export default function ServicesScreen() {
         {
             title: t('services.membership.title'),
             icon: 'UserPlus',
+            route: '/services/membership/register',
+            actionLabel: 'Member Registration & Documents',
             items: [
                 t('services.membership.newReg'),
                 t('services.membership.renewal'),
@@ -58,6 +60,8 @@ export default function ServicesScreen() {
         {
             title: t('services.training.title'),
             icon: 'BookOpen',
+            route: '/services/training',
+            actionLabel: 'Browse Seminars & Training',
             items: [
                 t('services.training.safety'),
                 t('services.training.tech'),
@@ -68,6 +72,8 @@ export default function ServicesScreen() {
         {
             title: t('services.legal.title'),
             icon: 'Scale',
+            route: '/services/legal',
+            actionLabel: 'Access Legal Advisory Cell',
             items: [
                 t('services.legal.info'),
                 t('services.legal.correspondence'),
@@ -105,7 +111,16 @@ export default function ServicesScreen() {
                 style={styles.cardGradientBorder}
             >
                 <View style={[styles.sectionCard, { backgroundColor: colors.card }]}>
-                    <View style={styles.sectionHeader}>
+                    <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => {
+                            lightImpact();
+                            if (section.route) {
+                                handleRestrictedAction(() => router.push(section.route));
+                            }
+                        }}
+                        style={styles.sectionHeader}
+                    >
                         <LinearGradient
                             colors={Colors.gradients.button}
                             style={styles.iconContainer}
@@ -113,7 +128,8 @@ export default function ServicesScreen() {
                             <SectionIcon size={24} color="#FFF" />
                         </LinearGradient>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
-                    </View>
+                        <ChevronRight size={20} color={colors.icon} />
+                    </TouchableOpacity>
 
                     <View style={styles.sectionContent}>
                         {section.items.map((item: string, idx: number) => (
@@ -128,6 +144,30 @@ export default function ServicesScreen() {
                             </View>
                         ))}
                     </View>
+
+                    {section.route && (
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => {
+                                lightImpact();
+                                handleRestrictedAction(() => router.push(section.route));
+                            }}
+                            style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                marginTop: 6,
+                                paddingTop: 14,
+                                borderTopWidth: 1,
+                                borderTopColor: colors.border || 'rgba(255,255,255,0.08)',
+                            }}
+                        >
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary }}>
+                                {section.actionLabel}
+                            </Text>
+                            <ChevronRight size={16} color={colors.primary} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </LinearGradient>
         );
