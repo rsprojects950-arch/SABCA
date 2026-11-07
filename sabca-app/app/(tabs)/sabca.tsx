@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase';
 import { MemberCardSkeleton } from '../../components/Skeleton';
 import { useAuth } from '../../ctx/AuthContext';
 import { useTheme } from '../../ctx/ThemeContext';
+import { useModeration } from '../../ctx/ModerationContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useHaptics } from '../../hooks/useHaptics';
@@ -58,6 +59,7 @@ export default function SabcaScreen() {
     const router = useRouter();
     const { user, isMembershipActive } = useAuth();
     const { colors, isDark } = useTheme();
+    const { isBlocked, showModerationOptions } = useModeration();
     const { t } = useTranslation();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -266,58 +268,66 @@ export default function SabcaScreen() {
     };
 
     const renderTeamMember = ({ item }: { item: any }) => (
-        <LinearGradient
-            colors={isDark ? ['rgba(229, 57, 53, 0.2)', 'rgba(142, 68, 173, 0.2)'] : Colors.gradients.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.cardGradientBorder}
+        <TouchableOpacity
+            activeOpacity={0.85}
+            delayLongPress={400}
+            onLongPress={() => {
+                showModerationOptions({ id: item.id, name: item.full_name });
+            }}
         >
-            <View style={[styles.card, { backgroundColor: colors.card, paddingVertical: 12 }]}>
-                <View style={[styles.cardHeader, { marginBottom: 0 }]}>
-                    <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9' }]}>
-                        {item.avatar_url ? (
-                            <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
-                        ) : (
-                            <User size={24} color={colors.primary} />
-                        )}
+            <LinearGradient
+                colors={isDark ? ['rgba(229, 57, 53, 0.2)', 'rgba(142, 68, 173, 0.2)'] : Colors.gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.cardGradientBorder}
+            >
+                <View style={[styles.card, { backgroundColor: colors.card, paddingVertical: 12 }]}>
+                    <View style={[styles.cardHeader, { marginBottom: 0 }]}>
+                        <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9' }]}>
+                            {item.avatar_url ? (
+                                <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
+                            ) : (
+                                <User size={24} color={colors.primary} />
+                            )}
+                        </View>
+                        <View style={styles.info}>
+                            <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{item.full_name}</Text>
+                            <Text style={[styles.role, { color: isDark ? '#F87171' : '#B91C1C', fontWeight: '600' }]} numberOfLines={1}>
+                                {item.committee_role === 'State' ? item.designation : (item.designation || t('sabca.member'))}
+                            </Text>
+                        </View>
+
+                        {/* Email button on the right */}
+                        {(() => {
+                            const isStateMember = item.committee_role === 'State';
+                            // Only override for leaders (division_rank > 0)
+                            const isLeader = item.division_rank > 0;
+                            const contactEmail = isStateMember
+                                ? 'sabca0019@gmail.com'
+                                : (isLeader && division?.email && item.division === division.name)
+                                    ? division.email
+                                    : item.email;
+
+                            if (!contactEmail) return null;
+
+                            return (
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        lightImpact();
+                                        handleEmail(contactEmail);
+                                    }}
+                                    style={styles.contactBtn}
+                                >
+                                    <View style={[styles.iconGradient, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F1F5F9', width: 36, height: 36 }]}>
+                                        <Mail size={16} color={colors.text} />
+                                    </View>
+                                </TouchableOpacity>
+                            );
+                        })()}
                     </View>
-                    <View style={styles.info}>
-                        <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{item.full_name}</Text>
-                        <Text style={[styles.role, { color: isDark ? '#F87171' : '#B91C1C', fontWeight: '600' }]} numberOfLines={1}>
-                            {item.committee_role === 'State' ? item.designation : (item.designation || t('sabca.member'))}
-                        </Text>
-                    </View>
-
-                    {/* Email button on the right */}
-                    {(() => {
-                        const isStateMember = item.committee_role === 'State';
-                        // Only override for leaders (division_rank > 0)
-                        const isLeader = item.division_rank > 0;
-                        const contactEmail = isStateMember
-                            ? 'sabca0019@gmail.com'
-                            : (isLeader && division?.email && item.division === division.name)
-                                ? division.email
-                                : item.email;
-
-                        if (!contactEmail) return null;
-
-                        return (
-                            <TouchableOpacity
-                                onPress={() => {
-                                    lightImpact();
-                                    handleEmail(contactEmail);
-                                }}
-                                style={styles.contactBtn}
-                            >
-                                <View style={[styles.iconGradient, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : '#F1F5F9', width: 36, height: 36 }]}>
-                                    <Mail size={16} color={colors.text} />
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    })()}
                 </View>
-            </View>
-        </LinearGradient>
+            </LinearGradient>
+        </TouchableOpacity>
     );
 
     const renderDivisionListItem = ({ name }: { name: string }) => (
@@ -330,7 +340,14 @@ export default function SabcaScreen() {
     );
 
     const renderModalListItem = ({ item }: { item: any }) => (
-        <View style={[styles.listItem, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <TouchableOpacity
+            activeOpacity={0.85}
+            delayLongPress={400}
+            onLongPress={() => {
+                showModerationOptions({ id: item.id, name: item.full_name });
+            }}
+            style={[styles.listItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
             <View style={styles.listInfo}>
                 <Text style={[styles.listName, { color: colors.text }]}>{item.full_name}</Text>
             </View>
@@ -350,7 +367,7 @@ export default function SabcaScreen() {
                     </TouchableOpacity>
                 )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 
     const StatCard = ({ icon: Icon, value, label, color, onPress }: any) => (
@@ -485,9 +502,12 @@ export default function SabcaScreen() {
                                 </View>
                             ))}
                         </View>
-                    ) : (selectedCommitteeTab === 'State' ? stateCommittee : divisionLeaders).length > 0 ? (
+                    ) : (selectedCommitteeTab === 'State' ? stateCommittee : divisionLeaders).filter(item => !isBlocked(item.id)).length > 0 ? (
                         <View style={{ gap: 16, paddingHorizontal: 4 }}>
-                            {(selectedCommitteeTab === 'State' ? stateCommittee : divisionLeaders).map((item) => (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 6, paddingHorizontal: 12, marginBottom: 2, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderRadius: 8 }}>
+                                <Text style={{ fontSize: 11, color: colors.icon }}>💡 Press and hold any member card to report or block</Text>
+                            </View>
+                            {(selectedCommitteeTab === 'State' ? stateCommittee : divisionLeaders).filter(item => !isBlocked(item.id)).map((item) => (
                                 <View key={item.id} style={{ width: '100%' }}>
                                     {renderTeamMember({ item })}
                                 </View>
@@ -535,10 +555,15 @@ export default function SabcaScreen() {
                             </View>
 
                             <FlatList
-                                data={allMembers}
+                                data={allMembers.filter(item => !isBlocked(item.id))}
                                 renderItem={renderModalListItem}
                                 keyExtractor={(item) => item.id}
                                 contentContainerStyle={styles.modalListContent}
+                                ListHeaderComponent={
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 6, paddingHorizontal: 12, marginBottom: 8, backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderRadius: 8 }}>
+                                        <Text style={{ fontSize: 11, color: colors.icon }}>💡 Press and hold any member card to report or block</Text>
+                                    </View>
+                                }
                                 onEndReached={loadMoreMembers}
                                 onEndReachedThreshold={0.5}
                                 ListFooterComponent={
