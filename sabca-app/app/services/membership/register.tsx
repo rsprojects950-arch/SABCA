@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
 import { Colors } from '../../../constants/Colors';
 import { Upload, CheckCircle, User, Briefcase, MapPin } from 'lucide-react-native';
 import { PrimaryButton } from '../../../components/ui';
+import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../ctx/AuthContext';
 
 export default function MemberRegistrationScreen() {
     const router = useRouter();
+    const { user, refreshProfile } = useAuth();
     const [loading, setLoading] = useState(false);
 
     // Form State
@@ -16,8 +20,43 @@ export default function MemberRegistrationScreen() {
     const [company, setCompany] = useState('');
     const [address, setAddress] = useState('');
     const [memberType, setMemberType] = useState('Individual');
+    const [selectedDoc, setSelectedDoc] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
 
-    const handleSubmit = () => {
+    useEffect(() => {
+        if (user) {
+            setEmail(user.email || '');
+            supabase
+                .from('profiles')
+                .select('full_name, phone, company_name, location, membership_type')
+                .eq('id', user.id)
+                .maybeSingle()
+                .then(({ data }) => {
+                    if (data) {
+                        if (data.full_name) setFullName(data.full_name);
+                        if (data.phone) setPhone(data.phone.replace('+91', '').trim());
+                        if (data.company_name) setCompany(data.company_name);
+                        if (data.location) setAddress(data.location);
+                        if (data.membership_type) setMemberType(data.membership_type);
+                    }
+                });
+        }
+    }, [user]);
+
+    const handlePickDocument = async () => {
+        try {
+            const res = await DocumentPicker.getDocumentAsync({
+                type: ['application/pdf', 'image/*'],
+                copyToCacheDirectory: true,
+            });
+            if (!res.canceled && res.assets && res.assets.length > 0) {
+                setSelectedDoc(res.assets[0]);
+            }
+        } catch {
+            Alert.alert('Error', 'Failed to pick document.');
+        }
+    };
+
+    const handleSubmit = async () => {
         if (!fullName || !email || !phone) {
             Alert.alert('Missing Fields', 'Please fill in all required fields.');
             return;
@@ -29,12 +68,32 @@ export default function MemberRegistrationScreen() {
         }
 
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            Alert.alert('Application Submitted', 'Your membership application is under review.', [
+        try {
+            if (user) {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        full_name: fullName.trim(),
+                        phone: `+91${phone.trim()}`,
+                        company_name: company.trim() || null,
+                        location: address.trim() || null,
+                        membership_type: memberType,
+                        updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', user.id);
+
+                if (error) throw error;
+                if (refreshProfile) await refreshProfile();
+            }
+
+            Alert.alert('Application Submitted', 'Your membership application details have been recorded for review.', [
                 { text: 'OK', onPress: () => router.back() }
             ]);
-        }, 1500);
+        } catch (error: any) {
+            Alert.alert('Submission Error', error.message || 'Could not submit application at this time.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -99,9 +158,28 @@ export default function MemberRegistrationScreen() {
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Documents</Text>
-                <TouchableOpacity style={styles.uploadBtn}>
-                    <Upload size={24} color={Colors.light.primary} />
-                    <Text style={styles.uploadText}>Upload Govt ID / Trade License</Text>
+                <TouchableOpacity
+                    style={[styles.uploadBtn, selectedDoc && { borderColor: Colors.light.primary }]}
+                    onPress={handlePickDocument}
+                >
+                    {selectedDoc ? (
+                        <>
+                            <CheckCircle size={24} color={Colors.light.primary} />
+                            <Text style={[styles.uploadText, { color: Colors.light.text, fontWeight: '600' }]} numberOfLines={1}>
+                                {selectedDoc.name}
+                            </Text>
+                            {selectedDoc.size ? (
+                                <Text style={{ fontSize: 12, color: Colors.light.icon }}>
+                                    {(selectedDoc.size / 1024).toFixed(1)} KB • Tap to change
+                                </Text>
+                            ) : null}
+                        </>
+                    ) : (
+                        <>
+                            <Upload size={24} color={Colors.light.primary} />
+                            <Text style={styles.uploadText}>Upload Govt ID / Trade License</Text>
+                        </>
+                    )}
                 </TouchableOpacity>
             </View>
 

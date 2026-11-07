@@ -77,7 +77,7 @@ export default function TrainingScreen() {
                 <SecondaryButton
                     title="View Details"
                     icon={<ArrowRight size={16} color={Colors.light.primary} />}
-                    onPress={() => { }} // Add onPress handler if needed or keep it as non-functional for now as the card is clickable
+                    onPress={() => router.push(`/services/training/${item.id}`)}
                     style={{ height: 40, marginTop: 12, backgroundColor: 'transparent', borderColor: Colors.light.primary }}
                     textStyle={{ fontSize: 13, color: Colors.light.primary }}
                 />

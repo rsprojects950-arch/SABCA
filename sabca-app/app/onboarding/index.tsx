@@ -13,10 +13,39 @@ import { DISTRICTS, District } from '../../constants/Districts';
 import { useTheme } from '../../ctx/ThemeContext';
 
 export default function OnboardingScreen() {
-    const { user } = useAuth();
+    const { user, deleteAccount } = useAuth();
     const { colors, isDark } = useTheme();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        router.replace('/(auth)/login');
+    };
+
+    const handleCancelAndDelete = () => {
+        Alert.alert(
+            'Delete Account',
+            'Are you sure you want to cancel setup and permanently delete your account? All associated personal data will be deleted immediately.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete Account',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setLoading(true);
+                        const { error } = await deleteAccount();
+                        setLoading(false);
+                        if (error) {
+                            Alert.alert('Error', error.message || 'Failed to delete account');
+                        } else {
+                            router.replace('/(auth)/login');
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     const [fullName, setFullName] = useState('');
     const [division, setDivision] = useState('');
@@ -207,6 +236,15 @@ export default function OnboardingScreen() {
                             </>
                         )}
                     </TouchableOpacity>
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, paddingHorizontal: 4 }}>
+                        <TouchableOpacity onPress={handleSignOut} disabled={loading} style={{ paddingVertical: 8 }}>
+                            <Text style={{ fontSize: 14, color: colors.icon, fontWeight: '600' }}>Sign Out</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleCancelAndDelete} disabled={loading} style={{ paddingVertical: 8 }}>
+                            <Text style={{ fontSize: 14, color: '#EF4444', fontWeight: '600' }}>Cancel & Delete Account</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             </ScrollView>
 

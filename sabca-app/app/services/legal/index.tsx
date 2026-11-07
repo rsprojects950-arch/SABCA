@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../../constants/Colors';
 import { Scale, FileText, Phone, MessageSquare, ChevronRight } from 'lucide-react-native';
@@ -7,26 +7,32 @@ import { Scale, FileText, Phone, MessageSquare, ChevronRight } from 'lucide-reac
 export default function LegalServicesScreen() {
     const router = useRouter();
 
+    const openMail = (url: string) => {
+        Linking.openURL(url).catch(() => {
+            Alert.alert('Contact Legal Cell', 'Please email us directly at helpline@sabca.in for assistance.');
+        });
+    };
+
     const OPTIONS = [
         {
             title: 'File a Contractor Grievance',
             desc: 'Formal dispute resolution with main contractors.',
             icon: Scale,
-            route: '/services/grievances/create',
+            action: () => router.push('/services/grievances/create'),
             color: '#EF4444'
         },
         {
             title: 'Legal Consultation',
             desc: 'Book a session with our panel of experts.',
             icon: Phone,
-            route: '', // Placeholder
+            action: () => openMail('mailto:helpline@sabca.in?subject=Legal%20Consultation%20Request&body=Member%20Legal%20Consultation%20Request%20via%20SABCA%20App'),
             color: '#3B82F6'
         },
         {
             title: 'Document Review',
             desc: 'Get your contracts and tenders reviewed.',
             icon: FileText,
-            route: '', // Placeholder
+            action: () => openMail('mailto:helpline@sabca.in?subject=Contract%20%26%20Tender%20Document%20Review&body=Contract%20Review%20Request%20via%20SABCA%20App'),
             color: '#10B981'
         }
     ];
@@ -43,7 +49,7 @@ export default function LegalServicesScreen() {
                     <TouchableOpacity
                         key={index}
                         style={styles.card}
-                        onPress={() => opt.route ? router.push(opt.route as any) : null}
+                        onPress={opt.action}
                     >
                         <View style={[styles.iconBox, { backgroundColor: `${opt.color}15` }]}>
                             <opt.icon size={24} color={opt.color} />
@@ -62,10 +68,13 @@ export default function LegalServicesScreen() {
                 <Text style={styles.infoText}>
                     Our legal cell operates Mon-Fri, 10 AM to 5 PM. For urgent matters, please contact the helpline directly.
                 </Text>
-                <View style={styles.contactRow}>
+                <TouchableOpacity
+                    style={styles.contactRow}
+                    onPress={() => openMail('mailto:helpline@sabca.in')}
+                >
                     <MessageSquare size={16} color={Colors.light.primary} />
                     <Text style={styles.contactText}>helpline@sabca.in</Text>
-                </View>
+                </TouchableOpacity>
             </View>
         </ScrollView>
     );

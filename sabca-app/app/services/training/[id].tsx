@@ -8,26 +8,57 @@ export default function TrainingDetailsScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
 
-    // Mock Detail Data
-    const course = {
-        title: 'Advanced Construction Safety',
-        description: 'Comprehensive training on safety protocols for high-rise buildings, covering hazard identification, risk assessment, and emergency response.',
-        instructor: 'Dr. A. Sharma, Safety Expert',
-        syllabus: [
-            'Introduction to Safety Standards (NBC 2016)',
-            'Hazard Identification & Risk Assessment',
-            'Personal Protective Equipment (PPE)',
-            'Fire Safety & Emergency Evacuation',
-            'SABCA Scaffolding Guidelines'
-        ],
-        price: '₹2,500',
-        image: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000'
+    const COURSES: Record<string, { title: string; description: string; instructor: string; syllabus: string[]; access: string; image: string }> = {
+        '1': {
+            title: 'Advanced Construction Safety',
+            description: 'Comprehensive training on safety protocols for high-rise buildings, covering hazard identification, risk assessment, and emergency response.',
+            instructor: 'Dr. A. Sharma, Safety Expert',
+            syllabus: [
+                'Introduction to Safety Standards (NBC 2016)',
+                'Hazard Identification & Risk Assessment',
+                'Personal Protective Equipment (PPE)',
+                'Fire Safety & Emergency Evacuation',
+                'SABCA Scaffolding Guidelines'
+            ],
+            access: 'Member Benefit',
+            image: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=1000'
+        },
+        '2': {
+            title: 'Project Management Professional',
+            description: 'Practical seminar for civil contractors on project scheduling, resource allocation, tender compliance, and milestone execution.',
+            instructor: 'Er. K.V. Rao, Senior Project Director',
+            syllabus: [
+                'Project Planning & Critical Path Method',
+                'Contract Administration & Tender Norms',
+                'Cost Control & Billing Milestones',
+                'Quality Assurance & Site Audits'
+            ],
+            access: 'Member Benefit',
+            image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1000'
+        },
+        '3': {
+            title: 'Sustainable Building Materials',
+            description: 'Technical workshop exploring eco-friendly construction materials, fly-ash utilization, green concrete, and energy-efficient design.',
+            instructor: 'Prof. M. Reddy, Structural Engineering',
+            syllabus: [
+                'Green Building Standards & Certifications',
+                'Supplementary Cementitious Materials',
+                'Recycled Aggregates in Civil Works',
+                'Thermal Insulation & Lifecycle Costing'
+            ],
+            access: 'Member Benefit',
+            image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1000'
+        }
     };
 
+    const course = COURSES[String(id)] || COURSES['1'];
+
     const handleRegister = () => {
-        Alert.alert('Registered', 'You have successfully registered for this course.', [
-            { text: 'View My Courses', onPress: () => router.back() }
-        ]);
+        Alert.alert(
+            'Registration Confirmed',
+            'Your registration for this seminar has been recorded. Session details will be sent to your registered email.',
+            [{ text: 'OK', onPress: () => router.back() }]
+        );
     };
 
     return (
@@ -68,11 +99,11 @@ export default function TrainingDetailsScreen() {
 
             <View style={styles.footer}>
                 <View>
-                    <Text style={styles.priceLabel}>Price</Text>
-                    <Text style={styles.price}>{course.price}</Text>
+                    <Text style={styles.priceLabel}>Access</Text>
+                    <Text style={[styles.price, { fontSize: 16, color: Colors.light.primary }]}>{course.access}</Text>
                 </View>
                 <TouchableOpacity style={styles.enrollBtn} onPress={handleRegister}>
-                    <Text style={styles.enrollText}>Enroll Now</Text>
+                    <Text style={styles.enrollText}>Register Attendance</Text>
                 </TouchableOpacity>
             </View>
         </View>
