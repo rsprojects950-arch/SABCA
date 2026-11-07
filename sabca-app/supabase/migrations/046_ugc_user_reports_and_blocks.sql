@@ -42,3 +42,4 @@ CREATE POLICY "Users can manage their blocked list"
     WITH CHECK (auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS idx_blocked_users_lookup ON public.blocked_users (user_id, blocked_user_id);
+
