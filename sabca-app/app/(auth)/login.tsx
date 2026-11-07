@@ -6,7 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { Colors } from '../../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Lock, Mail, Eye, EyeOff, Check, X, Phone, Fingerprint } from 'lucide-react-native';
+import { Lock, Mail, Eye, EyeOff, Check, X, Phone, Fingerprint, ScanFace } from 'lucide-react-native';
 import { useAuth } from '../../ctx/AuthContext';
 import { useBiometrics } from '../../hooks/useBiometrics';
 
@@ -26,13 +26,7 @@ export default function Login() {
 
     const router = useRouter();
     const { isBiometricEnabled, signInWithBiometrics } = useAuth();
-    const { authenticate } = useBiometrics();
-
-    React.useEffect(() => {
-        if (isBiometricEnabled) {
-            handleBiometricLogin();
-        }
-    }, [isBiometricEnabled]);
+    const { authenticate, biometricType } = useBiometrics();
 
     async function handleSignIn() {
         setLoading(true);
@@ -94,12 +88,12 @@ export default function Login() {
     }
 
     const handleBiometricLogin = async () => {
-        const success = await authenticate();
+        const success = await authenticate(`Sign in to SABCA using ${biometricType}`);
         if (success) {
             setLoading(true);
             const { error } = await signInWithBiometrics();
             if (error) {
-                Alert.alert('Login Failed', error.message || 'Stored credentials might be invalid.');
+                Alert.alert('Login Notice', error.message || 'Stored biometric session expired. Please sign in with your password to re-activate.');
             }
             setLoading(false);
         }
@@ -254,9 +248,14 @@ export default function Login() {
                         style={styles.biometricButton}
                         onPress={handleBiometricLogin}
                         disabled={loading}
+                        activeOpacity={0.8}
                     >
-                        <Fingerprint size={24} color="#FFF" />
-                        <Text style={styles.biometricText}>Quick Login</Text>
+                        {biometricType === 'Face ID' ? (
+                            <ScanFace size={22} color="#FFF" />
+                        ) : (
+                            <Fingerprint size={22} color="#FFF" />
+                        )}
+                        <Text style={styles.biometricText}>Sign in with {biometricType}</Text>
                     </TouchableOpacity>
                 )}
 

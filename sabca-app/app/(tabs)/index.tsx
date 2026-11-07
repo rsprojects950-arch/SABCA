@@ -684,7 +684,7 @@ const mm = (val: number) => (val / 85.6) * CARD_WIDTH;
 const pt = (val: number) => (val / 72) * 25.4 * (CARD_WIDTH / 85.6);
 
 export default function ProfileScreen() {
-  const { user, isAdmin, userRole, isMembershipActive } = useAuth();
+  const { user, isAdmin, userRole, isMembershipActive, isBiometricEnabled } = useAuth();
   const { colors, isDark } = useTheme();
   const router = useRouter();
   const { lightImpact, mediumImpact, successFeedback } = useHaptics();
@@ -919,8 +919,8 @@ export default function ProfileScreen() {
     `;
   };
 
-  const handleSignOut = () => {
-    supabase.auth.signOut();
+  const handleSignOut = async () => {
+    await supabase.auth.signOut({ scope: isBiometricEnabled ? 'local' : 'global' });
   };
 
   // Refresh Control

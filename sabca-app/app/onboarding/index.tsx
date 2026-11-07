@@ -13,13 +13,13 @@ import { DISTRICTS, District } from '../../constants/Districts';
 import { useTheme } from '../../ctx/ThemeContext';
 
 export default function OnboardingScreen() {
-    const { user, deleteAccount } = useAuth();
+    const { user, deleteAccount, isBiometricEnabled } = useAuth();
     const { colors, isDark } = useTheme();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: isBiometricEnabled ? 'local' : 'global' });
         router.replace('/(auth)/login');
     };
 
@@ -150,10 +150,7 @@ export default function OnboardingScreen() {
                         <Text style={[styles.subtitle, { color: isDark ? '#94A3B8' : 'rgba(255,255,255,0.9)' }]}>Let's get to know you better.</Text>
                     </View>
                     <TouchableOpacity
-                        onPress={async () => {
-                            await supabase.auth.signOut();
-                            router.replace('/(auth)/login');
-                        }}
+                        onPress={handleSignOut}
                         style={{ padding: 8, backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)', borderRadius: 12 }}
                     >
                         <Text style={{ color: '#FFF', fontWeight: '600', fontSize: 13 }}>Sign Out</Text>

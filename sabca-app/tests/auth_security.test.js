@@ -32,5 +32,15 @@ test('Auth & Biometric Security (OWASP MASVS & Apple Guideline 1.6)', async (t) 
         assert(authCode.includes('supabase.auth.onAuthStateChange'), 'Missing onAuthStateChange listener');
         assert(authCode.includes('newSession?.refresh_token'), 'Missing token rotation sync on session update');
     });
+
+    await t.test('Verifies non-destructive biometric error handling (preserves enrollment flag on token expiry)', () => {
+        assert(!authCode.includes('await setBiometricEnabled(false);'), 'Destructive wipe of biometric enrollment detected on token error');
+    });
+
+    await t.test('Verifies sign out uses local scope when biometrics enabled to preserve refresh token', () => {
+        const tabsIndexPath = path.resolve(__dirname, '../app/(tabs)/index.tsx');
+        const tabsCode = fs.readFileSync(tabsIndexPath, 'utf8');
+        assert(tabsCode.includes("scope: isBiometricEnabled ? 'local' : 'global'"), 'Missing conditional local scope sign out in profile screen');
+    });
 });
 

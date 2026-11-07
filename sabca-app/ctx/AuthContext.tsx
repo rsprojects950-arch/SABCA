@@ -205,9 +205,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             });
 
             if (error) {
-                // Token has expired or been revoked on the server
-                await setBiometricEnabled(false);
-                throw new Error('Biometric session expired. Please log in with your credentials.');
+                // Token has expired or been invalidated; do not wipe user's biometric enrollment preference.
+                // Re-authenticating with password will refresh the token and re-sync biometrics.
+                throw new Error('Biometric session expired. Please log in with your password to re-activate Face ID.');
             }
 
             // Save rotated refresh token
