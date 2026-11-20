@@ -1,0 +1,46 @@
+---
+title: RPCs, Triggers & Automation
+description: SECURITY DEFINER PostgreSQL RPCs, notification triggers, pg_cron schedules, and B-tree indexes.
+icon: Workflow
+---
+
+# RPCs, Triggers & Automation
+
+Privileged business logic (membership approvals, role transitions, cascade deletions, and enumeration-safe phone authentication) is encapsulated in PostgreSQL `SECURITY DEFINER` RPCs rather than client-side multi-table mutations.
+
+## Core RPC Catalog
+
+| Function | Migration(s) | Responsibility |
+| :--- | :--- | :--- |
+| `verify_login_by_phone(p_phone, p_password)` | `051` | Looks up `profiles` + verifies `auth.users.encrypted_password` via `pgcrypto` `crypt()`, returning email only when credentials match. |
+| `approve_membership(...)` | `010`, `013`, `014`, `021` | Generates district-typed SABCA IDs (`SABCA-{DistrictCode}-{Type}-{Seq}`), updates validity dates, and logs payment rows into `transactions`. |
+| `revoke_membership(...)` | `025` | Revokes active paid membership status for target user accounts by admins or moderators. |
+| `set_user_role(...)` / `set_user_designation(...)` / `set_user_rank(...)` | `022`, `023`, `039` | Admin/moderator role transitions, committee designations, and State vs Division committee rankings. |
+| `delete_user_data_cascade(p_user_id)` | `020`, `044` | Deletes rows across `notifications`, `transactions`, `documents`, `event_registrations`, `grievance_timeline`, `grievance_attachments`, `grievances`, `poll_votes`, `poll_questions`, and `profiles` (nullifying moderator assignments cleanly). |
+| `delete_own_account()` | `045_user_self_deletion_rpc` | Resolves `auth.uid()`, runs `delete_user_data_cascade()`, and deletes the row from `auth.users` for self-service compliance. |
+| `get_tables_diagnostic()` | `019` | Exposes table diagnostic metadata when troubleshooting deletion failures inside `delete-user`. |
+
+## Database Triggers & Scheduled `pg_cron` Jobs
+
+- **Notifications**: `create_notification()` (`011`, `012`) and `handle_new_poll_notification()` (`031`, `038`) emit in-app alerts when polls or grievance updates occur.
+- **ID Generation**: `generate_membership_id()` (`042`) formats standard member IDs while respecting custom divisions for admins and moderators.
+- **Realtime Broadcasts**: `poll_votes` and `poll_questions` belong to `supabase_realtime` (`030`, `034`).
+
+### Scheduled Automation (`049_server_automation.sql`)
+
+| Cron Job Name | Cron Expression (UTC) | IST Equivalent | Routine Invoked |
+| :--- | :--- | :--- | :--- |
+| `system-cleanup-3am-ist` | `30 21 * * *` | Daily at 3:00 AM IST | `public.cleanup_expired_content()` |
+| `grievance-escalation-6hr-ist` | `30 0,6,12,18 * * *` | Every 6 hours IST | `public.manage_grievance_priorities()` |
+
+## Performance Indexes
+
+Added across `003`, `046_ugc_user_reports_and_blocks`, and `050_performance_indices.sql`:
+
+- `idx_profiles_phone` (`profiles(phone)`)
+- `idx_profiles_division` (`profiles(division)`)
+- `idx_profiles_role` (`profiles(role)`)
+- `idx_profiles_membership` (`profiles(is_paid_member, membership_expiry)`)
+- `idx_grievances_status_division` (`grievances(status, division_id)`)
+- `idx_grievances_user_id` (`grievances(user_id)`)
+- `idx_blocked_users_lookup` (`blocked_users(user_id, blocked_user_id)`)

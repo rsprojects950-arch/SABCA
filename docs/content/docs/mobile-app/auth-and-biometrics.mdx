@@ -1,0 +1,57 @@
+---
+title: Authentication & Biometrics
+description: Single-step phone login, AsyncStorage session persistence, SecureStore biometric refresh tokens, and self-service deletion.
+icon: KeyRound
+---
+
+# Authentication & Biometrics
+
+Authentication combines **Supabase Auth** (`sabca-app/lib/supabase.ts`) with privacy-preserving phone credential lookup, hardware biometric re-authentication (`expo-local-authentication` + `expo-secure-store`), and self-service account deletion (`sabca-app/ctx/AuthContext.tsx`).
+
+## Client Storage & Configuration (`lib/supabase.ts`)
+
+`supabase` is configured with `ExpoStorage` wrapping `@react-native-async-storage/async-storage`, `autoRefreshToken: true`, `persistSession: true`, and `detectSessionInUrl: Platform.OS === 'web'` (so native deep links are parsed deterministically by `parseAuthDeepLink()` instead of browser URL inspection).
+
+## Phone + Password Login Without Enumeration
+
+Instead of resolving a phone number to an email before verifying credentials, `sabca-app/app/(auth)/login.tsx` calls the Postgres `SECURITY DEFINER` function `verify_login_by_phone(p_phone, p_password)` defined in `051_verify_login_by_phone.sql`.
+
+- The RPC looks up the profile by phone, compares the password against `auth.users.encrypted_password` using `pgcrypto`'s `crypt()`, and returns the user's email **only** if both phone and password match (otherwise `NULL`).
+- Upon success, the client invokes `supabase.auth.signInWithPassword({ email, password })`.
+
+## Hardware Biometric Flow (`hooks/useBiometrics.ts` + `AuthContext.tsx`)
+
+<Mermaid
+  caption="Biometric sign-out session preservation and hardware re-authentication flow."
+  chart={`sequenceDiagram
+    actor User
+    participant App as Login / Home Screen
+    participant Bio as useBiometrics()
+    participant Store as expo-secure-store
+    participant SB as Supabase Auth
+
+    User->>App: Sign out while Biometrics enabled
+    App->>SB: _removeSession() or signOut({ scope: 'local' })
+    Note over App,Store: Refresh token stays intact in Keychain/Keystore
+
+    User->>App: Tap Biometric Sign In
+    App->>Bio: authenticate()
+    Bio->>Bio: hasHardwareAsync() & isEnrolledAsync()
+    Bio-->>App: Face ID / Touch ID / Fingerprint prompt
+    App->>Store: Read stored refresh token
+    App->>SB: Refresh active session without storing raw password
+    SB-->>User: Signed in -> Route to /(tabs)`}
+/>
+
+### Security Guarantees
+
+1. **Refresh Tokens Over Raw Passwords**: Biometric login stores a Supabase refresh token in `expo-secure-store` rather than saving plaintext user passwords.
+2. **Scoped Sign-Out Preservation**: In `AuthContext.tsx`, `signOut()` distinguishes between biometric-enabled users (`_removeSession()` or `signOut({ scope: 'local' })` so the Keychain refresh token stays valid on Supabase servers) and non-biometric users (`signOut({ scope: 'global' })`).
+
+## Self-Service Account Deletion (`deleteAccount()`)
+
+`AuthContext.deleteAccount()` enforces Apple App Store Guideline 5.1.1(v):
+
+1. Lists and deletes user files in the `avatars` Storage bucket under `${user.id}/` (best-effort).
+2. Executes `supabase.rpc('delete_own_account')` (`045_user_self_deletion_rpc.sql`), which cascades database deletion via `delete_user_data_cascade()` and removes the `auth.users` row.
+3. Purges biometric and refresh-token keys from `SecureStore`, calls `supabase.auth.signOut()`, and clears React auth state.

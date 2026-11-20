@@ -1,0 +1,73 @@
+---
+title: Getting Started
+description: Local setup, environment prerequisites, and workspace commands for SABCA.
+icon: Terminal
+---
+
+# Getting Started
+
+This guide walks through setting up the **mobile client (`sabca-app/`)**, **developer docs (`docs/`)**, and **static web portal (`website/`)** locally on macOS.
+
+## Workspace Tooling Matrix
+
+| Workspace | Package Manager | Primary Stack | Entry Command |
+| :--- | :--- | :--- | :--- |
+| `sabca-app/` | `pnpm` (or `npm`) | Expo SDK 54, RN 0.81.5, TypeScript 5.9 | `pnpm start` |
+| `docs/` | `pnpm` | Next.js 16, Fumadocs MDX, Tailwind v4, Three.js | `pnpm dev` |
+| `website/` | Static (no build step) | HTML5, CSS3 (`style.css`), Vanilla JS | Open `index.html` or serve statically |
+
+<Callout type="warn" title="Critical iOS Native Warning (SceneDelegate.swift)">
+  `sabca-app/ios/SceneDelegate.swift` and `sabca-app/ios/SABCA/SceneDelegate.swift` contain custom `sabcaapp://` URL forwarding logic required for Supabase password reset recovery. If you run `npx expo prebuild --clean`, ensure both copies of `SceneDelegate.swift` are preserved or re-applied before archiving for iOS.
+</Callout>
+
+## Setup Steps
+
+<Steps>
+  <Step>
+    ### Install Mobile App Dependencies (`sabca-app/`)
+
+    ```bash
+    cd sabca-app
+    pnpm install
+    ```
+
+    Configure `.env` inside `sabca-app/` with your Supabase credentials (`EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`) before launching native builds or tests.
+  </Step>
+  <Step>
+    ### Run Mobile Client or Native Simulators
+
+    ```bash
+    cd sabca-app
+    # Metro bundler
+    pnpm start
+
+    # Native iOS / Android dev builds
+    pnpm ios
+    pnpm android
+    ```
+  </Step>
+  <Step>
+    ### Run & Build Developer Documentation (`docs/`)
+
+    ```bash
+    cd docs
+    pnpm install
+    pnpm dev
+    ```
+
+    Open `http://localhost:3000` in your browser. Before committing changes to documentation, verify types and production output:
+
+    ```bash
+    cd docs
+    pnpm run types:check && pnpm build
+    ```
+  </Step>
+  <Step>
+    ### Preview the Public Website (`website/`)
+
+    ```bash
+    cd website
+    npx serve .
+    ```
+  </Step>
+</Steps>

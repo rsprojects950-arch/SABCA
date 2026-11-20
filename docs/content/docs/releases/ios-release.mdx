@@ -1,0 +1,52 @@
+---
+title: iOS App Store Release Guide
+description: Bundle ID, PrivacyInfo.xcprivacy, SceneDelegate verification, App Store Review compliance, and EAS iOS builds.
+icon: Smartphone
+---
+
+# iOS App Store Release Guide
+
+The iOS target ships under bundle identifier **`com.infraxpert.sabca`** with Universal iPad support (`"supportsTablet": true` in `sabca-app/app.json`).
+
+## Pre-Submission Checklist
+
+<Steps>
+  <Step>
+    ### Verify Privacy Manifest & Permissions (`PrivacyInfo.xcprivacy` + `Info.plist`)
+
+    `sabca-app/ios/SABCA/PrivacyInfo.xcprivacy` declares `NSPrivacyTracking = false`, declares six app-functionality data types (`Name`, `EmailAddress`, `PhoneNumber`, `PhysicalAddress`, `PhotosOrVideos`, `UserID`), and specifies Required Reason codes for:
+    - `NSPrivacyAccessedAPICategoryUserDefaults` (`CA92.1`)
+    - `NSPrivacyAccessedAPICategoryFileTimestamp` (`3B52.1`, `C617.1`)
+    - `NSPrivacyAccessedAPICategoryDiskSpace` (`E174.1`)
+    - `NSPrivacyAccessedAPICategorySystemBootTime` (`35F9.1`)
+  </Step>
+  <Step>
+    ### Verify `SceneDelegate.swift` Deep Link Parity & Tests
+
+    Ensure `sabca-app/ios/SceneDelegate.swift` and `sabca-app/ios/SABCA/SceneDelegate.swift` remain byte-for-byte identical, parse cleanly with Swift, and pass all 8 compliance/unit suites:
+
+    ```bash
+    cd sabca-app
+    diff -u ios/SceneDelegate.swift ios/SABCA/SceneDelegate.swift
+    swiftc -parse ios/SceneDelegate.swift
+    npx tsc --noEmit
+    npm test
+    ```
+  </Step>
+  <Step>
+    ### Verify Apple App Store Guideline Readiness
+
+    - **Guideline 1.2 (UGC Safety)**: `ModerationContext.tsx` reporting (`user_reports`), member blocking (`blocked_users`), press-and-hold filtering (`!isBlocked()`), and in-app Terms/EULA links.
+    - **Guideline 2.1 (App Completeness)**: Unassigned member profiles omit blank card fields (`utils/idCardFormatter.ts`) instead of displaying hardcoded sample placeholders, and `sabcaapp://` password recovery links resolve reliably on cold/warm launch.
+    - **Guideline 5.1.1(v) (Account Deletion)**: Self-service deletion in Settings/Onboarding calls `deleteAccount()` -> `delete_own_account()`, alongside public deletion guide at `website/delete.html`.
+  </Step>
+  <Step>
+    ### Build & Submit with EAS CLI
+
+    ```bash
+    cd sabca-app
+    eas build --platform ios --profile production
+    eas submit --platform ios --latest
+    ```
+  </Step>
+</Steps>

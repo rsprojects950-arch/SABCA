@@ -1,0 +1,28 @@
+---
+title: Frontend Styling & Scripts
+description: CSS design system, mobile navigation, contact form handling, slideshow controller, and lightbox in website/.
+icon: FileCode
+---
+
+# Frontend Styling & Scripts (`website/`)
+
+The public portal in `website/` uses pure stylesheets (`website/css/style.css`) and DOM scripting (`website/js/script.js`) attached on `DOMContentLoaded`.
+
+## Script Architecture (`website/js/script.js`)
+
+`script.js` organizes four interactive controllers:
+
+1. **Mobile Navigation Toggle (`#mobile-toggle`, `#nav-links`)**: Toggles the `.open` menu class, swaps Font Awesome hamburger/close icon classes (`fa-bars` / `fa-xmark`), and auto-closes the drawer when a navigation link is clicked.
+2. **Contact Form Validation & Feedback (`#contact-form`, `#form-status`)**: Intercepts form submit (`e.preventDefault()`), validates non-empty trimmed values for `#contact-name`, `#contact-email`, and `#contact-message`, displays client-side feedback inside `#form-status`, and resets inputs on validation success.
+   <Callout type="info" title="Client-Side Submission Note">
+     `website/js/script.js` provides immediate client-side validation and confirmation UI on `#contact-form` without posting to a remote backend API. Direct inquiries are routed to `statecoordinator@sabca.co.in` via `mailto:` links across `index.html`, `delete.html`, `privacy.html`, and `terms.html`.
+   </Callout>
+3. **Account Deletion Slideshow (`changeSlide`, `goToSlide`)**: Tracks `.slide` elements on `website/delete.html`, builds clickable `#indicators` dots, updates `#slide-progress` (`Slide X of Y`), toggles disabled states on `#prev-btn`/`#next-btn`, and binds `ArrowLeft` / `ArrowRight` keyboard shortcuts when focus is outside `<input>`/`<textarea>`.
+4. **Zoom Lightbox (`openLightbox`, `closeLightbox`)**: Magnifies slideshow screenshots inside `#lightbox` (`#lightbox-img` + `#lightbox-caption`), locks page scroll (`document.body.style.overflow = 'hidden'`), and dismisses on the `Escape` key.
+
+## Visual Walkthrough Assets (`website/assets/`)
+
+`website/delete.html` loads real mobile screenshots from `website/assets/` to illustrate both deletion workflows for end users and App Store reviewers:
+
+- **Self-Service Deletion**: `user_profile.jpeg`, `user_delete_dialog.jpeg`, `user_delete_success.jpeg`
+- **Admin-Assisted Deletion**: `admin_home.jpeg`, `admin_users.jpeg`, `admin_user_list.jpeg`, `admin_delete_select.jpeg`, `admin_delete_confirm.jpeg`, `admin_delete_success.jpeg`, `email_request.png`

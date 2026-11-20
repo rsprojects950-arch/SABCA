@@ -1,0 +1,18 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "getting-started",
+    "testing",
+    "---Mobile App---",
+    "mobile-app",
+    "---Backend & Supabase---",
+    "backend",
+    "---Public Website---",
+    "website",
+    "---Builds & Releases---",
+    "releases",
+    "---Guidelines---",
+    "guidelines"
+  ]
+}

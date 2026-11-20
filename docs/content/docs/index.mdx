@@ -1,0 +1,104 @@
+---
+title: Architecture Overview
+description: End-to-end architecture for the SABCA monorepo spanning sabca-app/, Supabase, and website/.
+icon: Layers
+---
+
+# SABCA Monorepo Architecture
+
+The **SABCA** repository unites two production user-facing surfaces alongside this interactive engineering documentation portal on the `master` branch:
+
+- **`sabca-app/`** — Cross-platform iOS & Android association application built with **Expo SDK 54**, **React Native 0.81.5**, and **Expo Router v6**, backed by **Supabase** (Auth, PostgreSQL with Row-Level Security, Realtime, Storage, and Deno Edge Functions).
+- **`website/`** — Unified static HTML/CSS/JS public portal serving the association showcase, official **Privacy Policy**, **Terms of Service**, **Account Deletion** self-service request flow, and App Store review visual references.
+- **`docs/`** — This **Fumadocs + Next.js** developer knowledge base featuring theme-aware Mermaid diagrams, interactive Three.js 3D visualizers, and searchable SQL migration tooling.
+
+## Interactive 3D System Topology
+
+Click any component node in the 3D scene (or use the pill selector on the right) to inspect its responsibilities, key source files, and documentation links.
+
+<SabcaArchitecture3D />
+
+## Repository Map
+
+<Files>
+  <Folder name="SABCA" defaultOpen>
+    <File name="README.md" />
+    <Folder name="sabca-app" defaultOpen>
+      <File name="app.json" />
+      <File name="eas.json" />
+      <File name="package.json" />
+      <Folder name="app" />
+      <Folder name="ctx" />
+      <Folder name="lib" />
+      <Folder name="utils" />
+      <Folder name="hooks" />
+      <Folder name="constants" />
+      <Folder name="locales" />
+      <Folder name="ios" />
+      <Folder name="android" />
+      <Folder name="supabase" />
+      <Folder name="tests" />
+      <Folder name="docs (legacy markdown archive)" />
+    </Folder>
+    <Folder name="website" defaultOpen>
+      <File name="index.html" />
+      <File name="delete.html" />
+      <File name="privacy.html" />
+      <File name="terms.html" />
+      <Folder name="css" />
+      <Folder name="js" />
+      <Folder name="images" />
+      <Folder name="assets" />
+    </Folder>
+    <Folder name="docs" defaultOpen>
+      <File name="package.json" />
+      <Folder name="app" />
+      <Folder name="components" />
+      <Folder name="content/docs" />
+      <Folder name="lib" />
+    </Folder>
+  </Folder>
+</Files>
+
+## Cross-System Data Flows
+
+<Mermaid
+  caption="High-level connectivity between mobile client, deep linking layer, web portal, and Supabase backend."
+  chart={`flowchart LR
+    Member["Mobile User (iOS / Android)"] -->|Expo Router v6| App["sabca-app/"]
+    Member -->|sabcaapp:// Deep Link| NativeLink["SceneDelegate.swift / Android App"]
+    NativeLink --> App
+    App -->|Auth + RLS + RPCs| SB["Supabase Auth & PostgreSQL"]
+    App -->|Realtime WebSockets| PollRT["poll_votes / poll_questions"]
+    PollRT --> SB
+    App -->|Invoke| EdgeDelete["Edge Function: delete-user"]
+    EdgeDelete --> SB
+    SB -->|Webhooks| EdgeMail["Nodemailer SMTP Edge Functions"]
+    Visitor["Web Visitor"] --> Web["website/ Static Portal"]
+    Web -->|Deletion / Grievance / Legal| Member`}
+/>
+
+## Quick Navigation
+
+<Cards>
+  <Card
+    title="Getting Started"
+    description="Set up Node.js, pnpm, Expo CLI, and environment variables across all three workspaces."
+    href="/docs/getting-started"
+  />
+  <Card
+    title="Mobile App Internals"
+    description="Explore navigation stacks, AuthContext, SceneDelegate recovery links, and 3D ID Card spec."
+    href="/docs/mobile-app/architecture"
+  />
+  <Card
+    title="Supabase & 52 Migrations"
+    description="Search all 52 SQL migrations, inspect SECURITY DEFINER RPCs, and trace SMTP webhooks."
+    href="/docs/backend/database-and-migrations"
+  />
+  <Card
+    title="Release & Version Sync"
+    description="Follow the version/build number matrix (v1.0.2 / Build 8) for App Store and Play Store."
+    href="/docs/releases/versioning"
+  />
+</Cards>

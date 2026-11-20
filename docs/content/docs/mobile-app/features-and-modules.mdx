@@ -1,0 +1,36 @@
+---
+title: Features & Member Modules
+description: Districts, membership tiers, Events/News/Polls, Grievances, Government Orders, Directory, and PDF receipts.
+icon: Blocks
+---
+
+# Member Features & Modules
+
+Once authenticated with a complete onboarding profile, members access association directories, live polls, grievance ticketing, government circulars, and downloadable membership receipts across the four main tabs and nested stack modules.
+
+## Districts & Membership Tiers (`constants/Districts.ts`)
+
+SABCA organizes members across **16 regional divisions** (e.g., `Tirupati (SABCA-TPT)`, `Ananthapuramu (SABCA-CWA-ATP)`, `Guntur Nagarapalaka Samata (SABCA-GMCA)`, `Greater Visakha (SABCA-GVMC-CWA)`, `Mangalagiri Tadepalli (SABCA-MTMC)`) and **3 membership tiers**:
+
+| Membership Tier | Code | Color Token |
+| :--- | :--- | :--- |
+| Annual Membership (`Annual`) | `AM` | `#10B981` |
+| Life Membership (`Life`) | `LM` | `#F59E0B` |
+| Global Membership (`Global`) | `GM` | `#6366F1` |
+
+## Feature Modules
+
+<Tabs items={['Directory & Hub', 'Events, News & Polls', 'Grievances & G.O.s', 'Documents & Receipts']}>
+  <Tab value="Directory & Hub">
+    `app/(tabs)/sabca.tsx` renders State Committee leadership, Division Leaders, and paginated member lists from `profiles` alongside the 16 divisions, while `app/directory/[division].tsx` loads division-specific executive contacts from `directory_contacts`. Blocked member IDs are filtered client-side via `!isBlocked(item.id)`.
+  </Tab>
+  <Tab value="Events, News & Polls">
+    `app/(tabs)/events.tsx` uses `@tanstack/react-query` (`useInfiniteQuery`) for Events (plus detail registration screen `app/events/[id].tsx`, gating registration for paid members) and News updates. `app/services/polls.ts` integrates with `poll_questions` and `poll_votes`, subscribing to Supabase Realtime Postgres changes so vote counts update live across connected devices.
+  </Tab>
+  <Tab value="Grievances & G.O.s">
+    Members browse grievances in `app/services/grievances/index.tsx` and file tickets in `app/services/grievances/create.tsx` across 6 categories (`Payment Issues`, `Government Approvals`, `Contractor Disputes`, `Legal Issues`, `Project Delays`, `Others`) with file attachments stored in the `grievance-attachments` bucket. Helpers in `utils/edge_case_utils.ts` provide `checkNetworkConnection()`, `retryOperation()`, and `checkDuplicateGrievance()`. `app/services/go-list.tsx` paginates and searches `government_orders` and downloads PDFs via `expo-file-system/legacy` + `expo-sharing`.
+  </Tab>
+  <Tab value="Documents & Receipts">
+    The `app/member/` module includes `edit-profile.tsx`, `documents.tsx` (`documents` Storage bucket), `history.tsx` (transactions & renewals via `renew.tsx`), `qr-access.tsx`, and offline HTML-to-PDF receipt rendering via `generateReceiptPDF()` in `lib/receiptGenerator.ts`. Notifications are displayed at `app/notifications/index.tsx`.
+  </Tab>
+</Tabs>

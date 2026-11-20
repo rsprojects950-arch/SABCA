@@ -1,0 +1,186 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), var(--font-sans), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+
+  --color-fd-background: hsl(0, 0%, 99%);
+  --color-fd-foreground: hsl(0, 0%, 8%);
+  --color-fd-muted: hsl(0, 0%, 95.5%);
+  --color-fd-muted-foreground: hsl(0, 0%, 42%);
+  --color-fd-popover: hsl(0, 0%, 100%);
+  --color-fd-popover-foreground: hsl(0, 0%, 10%);
+  --color-fd-card: hsl(0, 0%, 100%);
+  --color-fd-card-foreground: hsl(0, 0%, 8%);
+  --color-fd-border: hsla(0, 0%, 84%, 0.78);
+  --color-fd-primary: hsl(0, 0%, 10%);
+  --color-fd-primary-foreground: hsl(0, 0%, 99%);
+  --color-fd-secondary: hsl(0, 0%, 94%);
+  --color-fd-secondary-foreground: hsl(0, 0%, 12%);
+  --color-fd-accent: hsl(0, 0%, 92%);
+  --color-fd-accent-foreground: hsl(0, 0%, 10%);
+  --color-fd-ring: hsl(0, 0%, 45%);
+}
+
+.dark {
+  --color-fd-background: hsl(0, 0%, 5%);
+  --color-fd-foreground: hsl(0, 0%, 95%);
+  --color-fd-muted: hsl(0, 0%, 12.5%);
+  --color-fd-muted-foreground: hsl(0, 0%, 66%);
+  --color-fd-popover: hsl(0, 0%, 8.5%);
+  --color-fd-popover-foreground: hsl(0, 0%, 95%);
+  --color-fd-card: hsl(0, 0%, 8.5%);
+  --color-fd-card-foreground: hsl(0, 0%, 95%);
+  --color-fd-border: hsla(0, 0%, 24%, 0.78);
+  --color-fd-primary: hsl(0, 0%, 97%);
+  --color-fd-primary-foreground: hsl(0, 0%, 8%);
+  --color-fd-secondary: hsl(0, 0%, 14%);
+  --color-fd-secondary-foreground: hsl(0, 0%, 94%);
+  --color-fd-accent: hsla(0, 0%, 22%, 0.7);
+  --color-fd-accent-foreground: hsl(0, 0%, 96%);
+  --color-fd-ring: hsl(0, 0%, 62%);
+}
+
+:root {
+  color-scheme: light dark;
+  --sabca-scrollbar-track: #f4f4f5;
+  --sabca-scrollbar-thumb: #a1a1aa;
+  accent-color: #171717;
+  scrollbar-color: var(--sabca-scrollbar-thumb) var(--sabca-scrollbar-track);
+}
+
+.dark:root {
+  --sabca-scrollbar-track: #141417;
+  --sabca-scrollbar-thumb: #52525b;
+  accent-color: #f4f4f5;
+}
+
+@supports (color: light-dark(white, black)) {
+  :root {
+    --sabca-scrollbar-track: light-dark(#f4f4f5, #141417);
+    --sabca-scrollbar-thumb: light-dark(#9ca3af, #52525b);
+    accent-color: light-dark(#171717, #f4f4f5);
+  }
+}
+
+@supports not (scrollbar-color: auto) {
+  .sabca-scroller::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .sabca-scroller::-webkit-scrollbar-thumb {
+    background: var(--sabca-scrollbar-thumb);
+    border-radius: 9999px;
+  }
+  .sabca-scroller::-webkit-scrollbar-track {
+    background: var(--sabca-scrollbar-track);
+  }
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+#nd-sidebar {
+  background-color: hsl(0, 0%, 97.5%);
+}
+
+.dark #nd-sidebar {
+  background-color: hsl(0, 0%, 7%);
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.sabca-dot-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in oklab, var(--color-fd-foreground) 11%, transparent) 1px,
+    transparent 0
+  );
+  background-size: 20px 20px;
+}
+
+.prose :where(code):not(:where(pre *, [class~='not-prose'], [class~='not-prose'] *)) {
+  border: 1px solid var(--color-fd-border);
+  background-color: color-mix(in oklab, var(--color-fd-foreground) 6%, transparent);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+}
+
+.prose table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.prose th {
+  background-color: var(--color-fd-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.prose tbody tr:hover {
+  background-color: color-mix(in oklab, var(--color-fd-foreground) 3%, transparent);
+}
+
+.sabca-mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Pure CSS reading progress indicator (Progressive Enhancement) */
+.sabca-scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: var(--color-fd-foreground);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    @keyframes sabca-grow-progress {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    .sabca-scroll-progress {
+      opacity: 0.72;
+      animation: sabca-grow-progress auto linear;
+      animation-timeline: scroll(root);
+    }
+  }
+}
+
+@media (forced-colors: active) {
+  .sabca-scroll-progress {
+    background: Highlight;
+    opacity: 1;
+  }
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

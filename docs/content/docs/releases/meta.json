@@ -1,0 +1,10 @@
+{
+  "title": "Builds & Releases",
+  "icon": "Rocket",
+  "pages": [
+    "versioning",
+    "ios-release",
+    "android-release",
+    "troubleshooting"
+  ]
+}

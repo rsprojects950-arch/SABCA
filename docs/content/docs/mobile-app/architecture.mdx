@@ -1,0 +1,99 @@
+---
+title: Mobile App Architecture
+description: Expo Router v6 stack, React Query provider hierarchy, theming, and internationalization in sabca-app/.
+icon: LayoutGrid
+---
+
+# Mobile App Architecture (`sabca-app/`)
+
+The SABCA mobile application targets iOS and Android from a shared TypeScript/React Native codebase built on **Expo SDK `^54.0.33`**, **React `19.1.0`**, **React Native `0.81.5`**, and **Expo Router `^6.0.23`**.
+
+## Core Runtime Stack
+
+| Package | Version | Purpose |
+| :--- | :--- | :--- |
+| `expo` | `^54.0.33` | Native runtime, prebuild generation, SecureStore, LocalAuthentication, Print, FileSystem |
+| `expo-router` | `^6.0.23` | File-system routing under `sabca-app/app/` |
+| `react` / `react-native` | `19.1.0` / `0.81.5` | Cross-platform UI runtime with `babel-plugin-react-compiler` |
+| `@supabase/supabase-js` | `^2.93.3` | Auth, PostgREST queries, RPCs, Realtime channels, and Storage uploads |
+| `@tanstack/react-query` | `^5.90.21` | Paginated server-state caching and infinite scroll queries |
+| `i18next` / `react-i18next` | `^25.8.13` / `^16.5.4` | Bilingual English & Telugu UI translations (`locales/en.json`, `locales/te.json`) |
+| `typescript` | `^5.3.0` | Static type checking (`npx tsc --noEmit`) |
+
+## Provider Tree & Auth Navigation Guard
+
+`sabca-app/app/_layout.tsx` composes global context providers around `<InitialLayout />`, which enforces session and profile completeness routing before rendering stack screens:
+
+```tsx
+SafeAreaProvider
+ └─ QueryClientProvider
+     └─ ThemeProvider
+         └─ LanguageProvider
+             └─ AuthProvider
+                 └─ ModerationProvider
+                     └─ InitialLayout (<Stack screenOptions={{ headerShown: false }} />)
+```
+
+<Mermaid
+  caption="InitialLayout route guard state machine in sabca-app/app/_layout.tsx."
+  chart={`flowchart TD
+    Start["App Mount / Auth State Change"] --> Loading{"isLoading?"}
+    Loading -->|Yes| Spinner["Render ActivityIndicator"]
+    Loading -->|No| Recovery{"isPasswordRecovery || isProcessingRecoveryLink?"}
+    Recovery -->|Yes| StayReset["Stay / Route to /(auth)/reset-password"]
+    Recovery -->|No| HasSession{"session exists?"}
+    HasSession -->|No| PublicCheck{"Public legal or auth route?"}
+    PublicCheck -->|Yes| AllowAuth["Allow /(auth)/*"]
+    PublicCheck -->|No| GoLogin["router.replace('/(auth)/login')"]
+    HasSession -->|Yes| Complete{"isProfileComplete?"}
+    Complete -->|No| GoOnboarding["router.replace('/onboarding')"]
+    Complete -->|Yes| GoTabs["router.replace('/(tabs)')"]`}
+/>
+
+## Directory Structure & Main Tabs
+
+The primary bottom-tab navigator (`sabca-app/app/(tabs)/_layout.tsx`) exposes four primary member tabs:
+
+- `index` — Home dashboard, Membership ID Card (`formatIdCardFields`), quick status actions, profile settings, and account danger zone.
+- `sabca` — State Committee, Division Leaders, district list, and filterable Association Directory.
+- `events` — Infinite-scrolled Events, News announcements, and live Realtime Polls.
+- `services` — Member self-service portal for Grievances, Government Orders (`go-list`), Membership Renewal, Documents, and Transaction Receipts.
+
+<Files>
+  <Folder name="sabca-app" defaultOpen>
+    <Folder name="app" defaultOpen>
+      <File name="_layout.tsx" />
+      <Folder name="(auth)">
+        <File name="login.tsx" />
+        <File name="signup.tsx" />
+        <File name="reset-password.tsx" />
+        <File name="privacy.tsx" />
+        <File name="terms.tsx" />
+      </Folder>
+      <Folder name="(tabs)">
+        <File name="_layout.tsx" />
+        <File name="index.tsx" />
+        <File name="sabca.tsx" />
+        <File name="events.tsx" />
+        <File name="services.tsx" />
+      </Folder>
+      <Folder name="onboarding" />
+      <Folder name="member" />
+      <Folder name="services" />
+      <Folder name="admin" />
+      <Folder name="directory" />
+      <Folder name="events" />
+      <Folder name="notifications" />
+    </Folder>
+    <Folder name="ctx" />
+    <Folder name="lib" />
+    <Folder name="hooks" />
+    <Folder name="constants" />
+    <Folder name="locales" />
+  </Folder>
+</Files>
+
+## Design Tokens & Bilingual i18n
+
+- **Theme Palette (`constants/Colors.ts`)**: Dual light/dark color system anchored by Primary Red (`#E53935`), Brand Purple (`#8E44AD`), and Brand Blue (`#3B82F6`), plus dedicated status colors for grievance lifecycle pills (`submitted`, `underReview`, `inProgress`, `resolved`, `rejected`, `escalated`).
+- **Localization (`lib/i18n.ts`)**: Initializes `i18next` with English (`en`) as default/fallback language and Telugu (`te`), wrapped with `LanguageProvider` (`ctx/LanguageContext.tsx`).

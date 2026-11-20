@@ -1,0 +1,10 @@
+{
+  "title": "Backend & Supabase",
+  "icon": "Database",
+  "pages": [
+    "database-and-migrations",
+    "rpcs-and-automation",
+    "edge-functions",
+    "security-posture"
+  ]
+}

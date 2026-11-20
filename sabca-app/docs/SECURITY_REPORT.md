@@ -1,3 +1,6 @@
+> [!NOTE]
+> **Historical Audit Snapshot (March 2026):** P1–P4 items below have since been implemented and audited. For the current security posture, biometric Keychain model, and remaining backlog, see the unified **`/SABCA/docs/`** Fumadocs portal ([`docs/content/docs/backend/security-posture.mdx`](../../docs/content/docs/backend/security-posture.mdx)).
+
 # SABCA Application: Security Audit & Hardening Report (March 2026)
 
 This document summarizes the cybersecurity audit findings and the proposed "Security Hardening" roadmap for the SABCA Mobile Application.

@@ -1,0 +1,51 @@
+---
+title: Database Schema & Migrations
+description: PostgreSQL Row-Level Security architecture, ER relationships, Storage buckets, and all 52 SQL migrations.
+icon: TableProperties
+---
+
+# Database Schema & Migrations
+
+The SABCA backend runs on **Supabase PostgreSQL**, evolving across **52 ordered `.sql` migration scripts** (`001` through `051`) inside `sabca-app/supabase/migrations/`.
+
+## Interactive Migration Explorer
+
+Search by filename or filter by domain to inspect every migration in execution order.
+
+<MigrationExplorer />
+
+## Core Schema Relationships
+
+<Mermaid
+  caption="Primary PostgreSQL tables and moderation/grievance/polling relationships."
+  chart={`erDiagram
+    DIVISIONS ||--o{ PROFILES : "organizes"
+    DIVISIONS ||--o{ DIRECTORY_CONTACTS : "lists"
+    PROFILES ||--o{ GRIEVANCES : "submits"
+    GRIEVANCES ||--o{ GRIEVANCE_TIMELINE : "logs"
+    GRIEVANCES ||--o{ GRIEVANCE_ATTACHMENTS : "stores"
+    PROFILES ||--o{ TRANSACTIONS : "pays"
+    PROFILES ||--o{ DOCUMENTS : "uploads"
+    PROFILES ||--o{ NOTIFICATIONS : "receives"
+    PROFILES ||--o{ EVENT_REGISTRATIONS : "attends"
+    EVENTS ||--o{ EVENT_REGISTRATIONS : "tracks"
+    POLL_QUESTIONS ||--o{ POLL_VOTES : "records"
+    PROFILES ||--o{ POLL_VOTES : "casts"
+    PROFILES ||--o{ USER_REPORTS : "reports"
+    PROFILES ||--o{ BLOCKED_USERS : "blocks"`}
+/>
+
+## RLS Design Pattern & Storage Buckets
+
+Early migrations (`017_fix_login_bug.sql`) encountered infinite recursion when `profiles` policies queried `profiles` directly. Migrations **`018_safe_admin_visibility.sql`** and **`024_moderator_division_rls.sql`** resolved this by encapsulating role and division checks inside `SECURITY DEFINER` PostgreSQL helper functions (e.g., `public.is_admin()`).
+
+### Supabase Storage Buckets
+
+| Bucket Name | Consumer Modules | Deletion Cleanup |
+| :--- | :--- | :--- |
+| `avatars` | Member profile photos (`app/(tabs)/index.tsx`) | Purged by both `deleteAccount()` and `delete-user` Edge Function |
+| `documents` | Personal member documents (`app/member/documents.tsx`) | Purged by `delete-user` Edge Function |
+| `grievance-attachments` | Grievance PDF/image uploads (`app/services/grievances/`) | Purged by `delete-user` Edge Function |
+| `events` | Event cover banners (`app/admin/create-event.tsx`, `app/(tabs)/events.tsx`) | Deleted via `deleteFileFromUrl()` when event is deleted |
+| `news` | Association news imagery (`app/admin/create-news.tsx`, `app/(tabs)/events.tsx`) | Deleted via `deleteFileFromUrl()` when news item is deleted |
+| `government_orders` | Official G.O. PDFs (`app/services/go-list.tsx`, `app/admin/create-go.tsx`) | Deleted via `deleteFileFromUrl()` on removal |

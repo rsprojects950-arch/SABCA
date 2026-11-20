@@ -1,3 +1,6 @@
+> [!NOTE]
+> **Historical Reference (Feb 2026):** Current deployment, database migration, and App Store/Play Store release runbooks are maintained in the unified **`/SABCA/docs/`** Fumadocs portal ([`docs/content/docs/releases/`](../../docs/content/docs/releases) & [`docs/content/docs/backend/`](../../docs/content/docs/backend)).
+
 # SABCA ID Migration - Deployment Guide
 
 ## 🎯 Objective

@@ -1,3 +1,6 @@
+> [!NOTE]
+> **Historical Reference (Feb 2026):** All **52 migrations** (`001`–`051`) and interactive migration filtering are documented in the unified **`/SABCA/docs/`** Fumadocs portal ([`docs/content/docs/backend/database-and-migrations.mdx`](../../docs/content/docs/backend/database-and-migrations.mdx)).
+
 # Migration Execution Order - FINAL
 
 **IMPORTANT**: Execute these migrations in the exact order specified below.

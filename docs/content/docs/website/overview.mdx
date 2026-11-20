@@ -1,0 +1,42 @@
+---
+title: Public Website Overview
+description: Overview of the consolidated static SABCA web portal in website/.
+icon: Compass
+---
+
+# Public Website Overview (`website/`)
+
+The `website/` directory contains SABCA's unified zero-build static web presence (consolidated in commit `547ebe6`), combining public association outreach, grievance/inquiry contact handling, App Store / Google Play compliance pages, and visual deletion instructions.
+
+## File Structure
+
+<Files>
+  <Folder name="website" defaultOpen>
+    <File name="index.html" />
+    <File name="delete.html" />
+    <File name="privacy.html" />
+    <File name="terms.html" />
+    <Folder name="css" defaultOpen>
+      <File name="style.css" />
+    </Folder>
+    <Folder name="js" defaultOpen>
+      <File name="script.js" />
+    </Folder>
+    <Folder name="images">
+      <File name="hero_bg.png" />
+      <File name="form_bg.png" />
+      <File name="pen_bg.png" />
+      <File name="sabca.jpg" />
+    </Folder>
+    <Folder name="assets" />
+  </Folder>
+</Files>
+
+## Page Inventory
+
+| File | Route / Purpose | Key Contents |
+| :--- | :--- | :--- |
+| `index.html` | Landing & Contact Us | Information banner linking `statecoordinator@sabca.co.in` and validated `#contact-form` submission UI. |
+| `delete.html` | Account Deletion Guide | Interactive screenshot slideshows with zoom lightbox documenting both self-service mobile account deletion and admin-assisted deletion, plus email fallback `statecoordinator@sabca.co.in`. |
+| `privacy.html` | Privacy Policy | Official policy for `www.sabca.co.in`, explaining PII collection, purpose, third-party disclosures, security controls, cookies/device IDs, under-18 policy, and contact links. |
+| `terms.html` | Terms of Service | Registration accuracy obligations, association rules, and dual support contacts (`statecoordinator@sabca.co.in` and `support@infraxpert.in`). |

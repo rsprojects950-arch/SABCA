@@ -1,0 +1,51 @@
+---
+title: Testing & Quality Gates
+description: Automated Node test runner suites, TypeScript checks, and native Swift verification across SABCA.
+icon: ShieldCheck
+---
+
+# Testing & Quality Gates
+
+The `sabca-app/` repository ships **8 automated Node test files** executed via the built-in `node --test` runner (`npm test` / `pnpm test`), alongside static TypeScript type checking and native iOS Swift syntax verification.
+
+## Test Runner Execution
+
+```bash
+cd sabca-app
+npx tsc --noEmit
+npm test
+```
+
+On iOS macOS hosts, native `SceneDelegate.swift` changes should also be diff-verified and syntax-checked:
+
+```bash
+cd sabca-app
+diff -u ios/SceneDelegate.swift ios/SABCA/SceneDelegate.swift
+swiftc -parse ios/SceneDelegate.swift
+```
+
+## Automated Test Suites (`sabca-app/tests/*.test.js`)
+
+| Suite File | Focus & Coverage |
+| :--- | :--- |
+| `tests/account_deletion.test.js` | Apple Guideline 5.1.1(v): verifies `AuthContext` exposes `deleteAccount()`, cleans up avatar storage, and invokes self-deletion RPCs. |
+| `tests/app_completeness.test.js` | Apple Guideline 2.1: scans `app/` for placeholder strings, broken links, or dead routes. |
+| `tests/auth_security.test.js` | OWASP MASVS & Apple Guideline 1.6 auth, biometric storage, and token-handling checks. |
+| `tests/compliance_config.test.js` | Apple Compliance: verifies `Info.plist` usage descriptions, `PrivacyInfo.xcprivacy` Required Reason APIs, and universal iPad support. |
+| `tests/crypto_utils.test.js` | Validates pure-TS `sha256` hashing and `signQRCode` Member Pass QR code signatures. |
+| `tests/id_card_fields.test.js` | Ensures `formatIdCardFields()` and `escapeHtml()` omit unset member fields cleanly with zero hardcoded sample fallbacks. |
+| `tests/password_reset_deeplink.test.js` | Validates `parseAuthDeepLink()` across implicit recovery fragments, PKCE `?code`, OTP `?token_hash`, error params, and `SceneDelegate.swift` parity. |
+| `tests/ugc_moderation.test.js` | Apple Guideline 1.2: asserts `ModerationContext` exports `REPORT_REASONS`, `useModeration()`, reporting, blocking, and EULA gating. |
+
+<Callout type="info" title="Test Count & Isolation">
+  All 8 suites combined currently execute **72 assertions / subtests** in under 1 second using `node:test` and `node:assert/strict` with zero external test runner overhead.
+</Callout>
+
+## Docs Build & Type Checks
+
+Always verify TypeScript generation and the full Next.js / Fumadocs production bundle inside `docs/` before releasing changes:
+
+```bash
+cd docs
+pnpm run types:check && pnpm build
+```

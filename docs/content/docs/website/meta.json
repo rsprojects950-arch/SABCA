@@ -1,0 +1,9 @@
+{
+  "title": "Public Website",
+  "icon": "Globe",
+  "pages": [
+    "overview",
+    "frontend-and-scripts",
+    "deployment"
+  ]
+}

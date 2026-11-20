@@ -1,0 +1,43 @@
+---
+title: Digital Member ID Card & QR Access
+description: Interactive 3D Member ID Card preview, Option 1 field omission rules, and SHA-256 QR pass signing.
+icon: CreditCard
+---
+
+# Digital Member ID Card & QR Access
+
+Every verified member receives a digital membership card rendered on the home dashboard (`sabca-app/app/(tabs)/index.tsx`) and a dedicated cryptographic QR verification screen (`sabca-app/app/member/qr-access.tsx`).
+
+<Callout type="info" title="App Store Guideline 2.1 Compliance (Option 1)">
+  Prior versions substituted sample fallbacks (`'S R EDIFICE PVT LTD'`, `'Autumn Field Apartment'`, `'srcvjw@gmail.com'`, `"blood_group || 'O+'"`) when profile fields were missing. This was replaced by **Option 1** inside `utils/idCardFormatter.ts`: unset fields are **omitted cleanly**, unassigned IDs display `ID : PENDING`, and missing membership types never emit `: NONE`.
+</Callout>
+
+## Interactive 3D Member Card Explorer
+
+Drag to orbit the card in 3D, toggle between **Verified Paid Member** and **Pending Member (Option 1)** states, and flip the card to inspect the QR verification pass schematic.
+
+<MemberIdCard3D />
+
+## Shared Formatting Pipeline (`utils/idCardFormatter.ts`)
+
+Both the on-screen React Native card and exported PDF card template share `formatIdCardFields(profile, userEmail)` so screen UI and PDF documents remain strictly aligned:
+
+1. **`idLine`**: Defaults `sabca_id` to `'PENDING'` when empty. Normalizes `'life'` / `'lifetime'` to `'LIFE TIME'`, omits `'none'`, and formats `ID : {sabcaId} : {typeDisplay}` (or `ID : {sabcaId}` when unassigned).
+2. **`contactLine`**: Strips any leading `+91` prefix from `phone` and appends `Blood Group : {blood_group}` only when a blood group string is present. Returns `null` if both are blank.
+3. **`companyName` / `location`**: Returns trimmed strings or `null` (omitted from display and PDF rows rather than substituting placeholder text).
+4. **`email`**: Resolves `profile.email`, falling back only to the authenticated `userEmail` session address if empty.
+5. **`escapeHtml()`**: Sanitizes dynamic text before interpolating into HTML-to-PDF export templates.
+
+## Cryptographic QR Verification (`member/qr-access.tsx` + `utils/crypto_utils.ts`)
+
+<Mermaid
+  caption="QR Pass generation and signature pipeline."
+  chart={`flowchart LR
+    Profile["Supabase profiles row"] -->|sabca_id, full_name, status| QRScreen["member/qr-access.tsx"]
+    EnvSalt["EXPO_PUBLIC_QR_SALT"] --> SignFn["signQRCode(sabcaId, uid, status)"]
+    QRScreen --> SignFn
+    SignFn -->|sha256 -> first 12 hex uppercase| Sig["SIG Token"]
+    Sig --> Payload["SABCA MEMBER PASS QR String"]`}
+/>
+
+`signQRCode(sabcaId, uid, status)` hashes `${sabcaId}:${uid}:${status}:${salt}` using the pure TypeScript `sha256()` implementation in `utils/crypto_utils.ts` and appends the first **12 uppercase hexadecimal characters** as the `SIG:` line inside the scanned text payload.

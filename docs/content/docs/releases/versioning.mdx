@@ -1,0 +1,21 @@
+---
+title: Versioning & Build Parity
+description: Synchronized version and build numbers across Expo app.json, package.json, iOS Xcode/Info.plist, Android Gradle, and EAS.
+icon: GitCompareArrows
+---
+
+# Versioning & Build Numbers
+
+`sabca-app/` maintains synchronized version metadata across five native/JS configuration files alongside `eas.json` remote auto-increment configuration. The repository is currently aligned at **`1.0.2` (Build `8`)**.
+
+## Interactive Version Sync Matrix
+
+Toggle between the current repository values (`1.0.2 / Build 8`) and the next patch release template (`1.0.3 / Build 9`):
+
+<VersionSyncMatrix />
+
+## Store Upload Rules
+
+- **Monotonic Increments**: Both Apple App Store Connect (`CFBundleVersion` / `expo.ios.buildNumber`) and Google Play Console (`versionCode` / `expo.android.versionCode`) reject duplicate build integers for the same or newer trains.
+- **EAS Remote Version Source**: `sabca-app/eas.json` sets `"appVersionSource": "remote"` and `build.production.autoIncrement: true`, using Node `22.x`, `corepack: true`, and `pnpm: "10.34.9"`.
+- **Native Parity**: When bumping locally for direct Xcode Archive or Gradle bundle builds, update `app.json`, `package.json`, `ios/SABCA/Info.plist`, `ios/SABCA.xcodeproj/project.pbxproj` (Debug + Release targets), and `android/app/build.gradle` in lockstep.

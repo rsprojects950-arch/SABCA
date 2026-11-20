@@ -1,0 +1,12 @@
+{
+  "title": "Mobile App",
+  "icon": "Smartphone",
+  "pages": [
+    "architecture",
+    "auth-and-biometrics",
+    "deep-linking-and-password-reset",
+    "digital-id-card",
+    "features-and-modules",
+    "admin-and-moderation"
+  ]
+}

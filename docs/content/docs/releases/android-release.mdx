@@ -1,0 +1,52 @@
+---
+title: Android Play Store Release Guide
+description: Gradle version parity, AndroidManifest.xml deep-link intent filters, Play Console Data Safety, and EAS Android builds.
+icon: Smartphone
+---
+
+# Android Play Store Release Guide
+
+The Android application compiles under package **`com.infraxpert.sabca`** (`sabca-app/app.json` and `sabca-app/android/app/build.gradle`), currently synchronized at `versionName "1.0.2"` and `versionCode 8`.
+
+## Deep Link & Intent Configuration
+
+`sabca-app/android/app/src/main/AndroidManifest.xml` registers deep-link handling on `MainActivity` (`launchMode="singleTask"`) across three URL schemes:
+
+- `https://`
+- `sabcaapp://` (custom application scheme for Supabase password reset callbacks)
+- `exp+sabca-app://` (Expo development scheme)
+
+`app/(auth)/reset-password.tsx` also registers a `BackHandler` hardware back-button listener that calls `clearPasswordRecovery()`, clears any partial local session (`signOut({ scope: 'local' })`), and returns safely to `/(auth)/login`.
+
+## Build Tracks (`eas.json`)
+
+<Tabs items={['Production AAB (Play Store)', 'Internal Preview APK', 'Development Client']}>
+  <Tab value="Production AAB (Play Store)">
+    ```bash
+    cd sabca-app
+    eas build --platform android --profile production
+    eas submit --platform android --latest
+    ```
+    Uses Node `22.x`, Corepack + `pnpm@10.34.9`, and `"autoIncrement": true` (`appVersionSource: "remote"`).
+  </Tab>
+  <Tab value="Internal Preview APK">
+    ```bash
+    cd sabca-app
+    eas build --platform android --profile preview
+    ```
+    Generates an installable `.apk` (`"buildType": "apk"`, `"distribution": "internal"`).
+  </Tab>
+  <Tab value="Development Client">
+    ```bash
+    cd sabca-app
+    eas build --platform android --profile development
+    ```
+    Builds with `"developmentClient": true` for testing native modules over local Metro.
+  </Tab>
+</Tabs>
+
+## Google Play Policy Checklist
+
+- **Account Deletion URL**: Point Google Play Console's *Delete account URL* to the hosted `website/delete.html` guide, matching the in-app self-service `deleteAccount()` flow.
+- **Privacy Policy URL**: Link Play Console and Play Store listing to the hosted `website/privacy.html` page.
+- **Monotonic `versionCode`**: Verify `versionCode` in `app.json` and `android/app/build.gradle` exceeds any previously uploaded internal/closed/production release bundle.

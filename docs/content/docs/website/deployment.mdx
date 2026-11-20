@@ -1,0 +1,32 @@
+---
+title: Static Hosting & Compliance Links
+description: Zero-build static deployment checklist and App Store / Google Play legal URL parity for website/.
+icon: CloudUpload
+---
+
+# Website Deployment & Compliance Parity
+
+Because `website/` contains no bundler or Node build step, any static file host can serve the directory directly at **`www.sabca.co.in`**.
+
+## Hosting Options
+
+<Tabs items={['Vercel / Netlify', 'GitHub Pages / Static Nginx']}>
+  <Tab value="Vercel / Netlify">
+    Configure the project **Root Directory** to `website`, leave the **Build Command** empty (none required), and set the **Output Directory** to `.` so `index.html`, `delete.html`, `privacy.html`, `terms.html`, `css/`, `js/`, `images/`, and `assets/` deploy verbatim.
+  </Tab>
+  <Tab value="GitHub Pages / Static Nginx">
+    Copy or point the web server document root to `website/`. Ensure relative paths (`css/style.css`, `js/script.js`, `assets/...`) resolve from the site root without rewriting extensions unintentionally.
+  </Tab>
+</Tabs>
+
+## App Store & Play Store Compliance Checklist
+
+Verify all published URLs and contact addresses remain synchronized between `website/` and `sabca-app/` before submitting mobile updates:
+
+| Purpose | Website File | In-App Counterpart |
+| :--- | :--- | :--- |
+| Privacy Policy URL | `website/privacy.html` | `sabca-app/app/(auth)/privacy.tsx` |
+| Terms of Service / EULA URL | `website/terms.html` | `sabca-app/app/(auth)/terms.tsx` |
+| Public Account Deletion Instructions | `website/delete.html` | `sabca-app/ctx/AuthContext.tsx` (`deleteAccount`) |
+| Primary Association Contact | `statecoordinator@sabca.co.in` | Highlighted across Privacy, Terms & Deletion pages |
+| Technical Support Email | `support@infraxpert.in` | Listed inside `website/terms.html` |

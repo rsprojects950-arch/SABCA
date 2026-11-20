@@ -1,0 +1,45 @@
+---
+title: Deno Edge Functions
+description: Admin-only account purging and Nodemailer SMTP grievance webhook dispatchers under supabase/functions/.
+icon: Webhook
+---
+
+# Deno Edge Functions
+
+Four Deno functions live under `sabca-app/supabase/functions/`, using `@supabase/supabase-js@2.21.0` with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+
+## 1. Admin Account Deletion (`delete-user/index.ts`)
+
+Invoked by State Admins from `sabca-app/app/admin/users.tsx` using a Bearer JWT:
+
+1. Verifies the caller via `supabaseClient.auth.getUser(token)` and checks `profiles.role === 'admin'` (returning HTTP `403` otherwise, and blocking self-deletion with HTTP `400`).
+2. Calls `supabaseAdmin.rpc('delete_user_data_cascade', { p_user_id: target_user_id })`.
+3. Cleans user-scoped objects across Storage buckets **`avatars`**, **`documents`**, and **`grievance-attachments`** (best-effort).
+4. Calls `supabaseAdmin.auth.admin.deleteUser(target_user_id)` and issues a defensive `profiles` delete if needed.
+5. On error, queries `get_tables_diagnostic()` for debugging context.
+
+## 2. Grievance SMTP Email Webhooks
+
+Three database-webhook functions share `npm:nodemailer` (`SMTP_HOST` default `smtp.gmail.com`, `SMTP_PORT` default `587`, `SMTP_USER`, `SMTP_PASS`) and format timestamps in `Asia/Kolkata` (`en-IN` 12-hour IST):
+
+| Function | Trigger Context | Recipients & Behavior |
+| :--- | :--- | :--- |
+| `send-grievance-email` | New `grievances` INSERT webhook | Resolves submitter email, division email, matching division moderators + all admins, and attachment links (`grievance_attachments`). |
+| `send-assignment-email` | `grievances` UPDATE where `assigned_to` changes | Notifies submitter (CC division email) and newly assigned moderator with formatted IST assignment details. |
+| `send-status-email` | `grievances` UPDATE where `status` changes | Sends status-transition confirmation email to the submitter, CC'ing division email and assigned moderator when present. |
+
+<Mermaid
+  caption="Serverless deletion cascade and grievance SMTP webhook architecture."
+  chart={`flowchart LR
+    AdminApp["admin/users.tsx"] -->|Bearer JWT + target_user_id| DelFn["Edge: delete-user"]
+    DelFn -->|Verify role = admin| Profiles["profiles / auth.users"]
+    DelFn -->|Atomic SQL| Cascade["RPC: delete_user_data_cascade"]
+    DelFn -->|Remove files| Buckets["Storage: avatars, documents, grievance-attachments"]
+
+    GrievanceTbl["grievances Table"] -->|INSERT| MailNew["send-grievance-email"]
+    GrievanceTbl -->|assigned_to changed| MailAssign["send-assignment-email"]
+    GrievanceTbl -->|status changed| MailStatus["send-status-email"]
+    MailNew --> SMTP["Nodemailer SMTP (IST timestamps)"]
+    MailAssign --> SMTP
+    MailStatus --> SMTP`}
+/>

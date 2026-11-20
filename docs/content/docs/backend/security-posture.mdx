@@ -1,0 +1,25 @@
+---
+title: Security Posture & Audit Status
+description: Current status of SABCA P1–P4 security hardening items, Privacy Manifest declarations, and open engineering backlog.
+icon: Lock
+---
+
+# Security Posture & Hardening Status
+
+This page reflects the verified state of the codebase against the **March 2026 Security Audit & Hardening Roadmap** (originally archived in `sabca-app/docs/SECURITY_REPORT.md`).
+
+## P1–P4 Roadmap Audit Matrix
+
+| Phase | Initiative | Status | Codebase Reality |
+| :--- | :--- | :--- | :--- |
+| **P1** | **Digital ID Signing** | **Partially Implemented** | QR codes inside `app/member/qr-access.tsx` are signed with `signQRCode()` (`utils/crypto_utils.ts`, salted SHA-256 prefix). A dedicated `/admin/verify` camera scanner screen has not yet been built. |
+| **P2** | **Phone Login Privacy** | **Implemented** | `051_verify_login_by_phone.sql` verifies `phone` + `password` inside a single `SECURITY DEFINER` Postgres function (`crypt()`), preventing phone-based email enumeration in `app/(auth)/login.tsx`. |
+| **P3** | **Token-Based Biometric Auth** | **Implemented** | `AuthContext.tsx` persists Supabase refresh tokens inside `expo-secure-store` rather than raw passwords, and preserves sessions on biometric sign-out via `_removeSession()` or `signOut({ scope: 'local' })`. |
+| **P4** | **Query Data Minimization** | **Partial / Ongoing** | Screens like `app/services/grievances/index.tsx` specify explicit column projections (`id, display_id, submitted_date, status, title, category, department`), while several admin and service queries (`app/admin/membership.tsx`, `app/services/go-list.tsx`) still use `.select('*')`. |
+
+## Additional Safeguards
+
+- **Non-Recursive RLS (`017`, `018`, `024`)**: Admin and moderator checks execute through `SECURITY DEFINER` helpers rather than self-referencing subqueries on `profiles`.
+- **Self-Service Purge & Token Cleanup**: `deleteAccount()` purges `avatars`, database rows (`delete_own_account`), `auth.users`, and local `SecureStore` secrets cleanly.
+- **HTML Injection Guard (`escapeHtml`)**: `utils/idCardFormatter.ts` escapes `&`, `<`, `>`, `"`, and `'` before rendering printable PDF membership documents.
+- **Apple Privacy Manifest (`ios/SABCA/PrivacyInfo.xcprivacy`)**: Declares Required Reason API categories and data collection disclosures verified by `tests/compliance_config.test.js`.

@@ -1,0 +1,28 @@
+---
+title: Admin Console & UGC Moderation
+description: Role-based administration, division-scoped moderator approvals, and Apple Guideline 1.2 moderation architecture.
+icon: Shield
+---
+
+# Admin Console & UGC Moderation
+
+Administrative capabilities are divided between **State Admins** (`role = 'admin'`) and division-scoped **Moderators** (`role = 'moderator'`), while User-Generated Content (UGC) safeguards protect all members in accordance with **Apple App Store Review Guideline 1.2**.
+
+## Admin & Moderator Screens (`sabca-app/app/admin/`)
+
+| Route | Purpose |
+| :--- | :--- |
+| `admin/dashboard.tsx` | Live counts across `profiles`, `events`, `news`, and open (`!= Resolved && != Rejected`) `grievances`. |
+| `admin/users.tsx` | Search/filter members by role or division; invoke RPCs `approve_membership`, `set_user_designation`, `set_user_role`, and `set_user_rank`; delete members via the `delete-user` Edge Function. |
+| `admin/membership.tsx` | Track expiring, Lifetime, Global, and expired memberships, filter by expiry window, edit tiers, and generate payment receipts via `generateReceiptPDF()`. |
+| `admin/grievances/index.tsx` | Triage grievances across statuses (`All`, `Submitted`, `Under Review`, `In Progress`, `Resolved`, `Escalated`). |
+| `admin/create-event.tsx`, `create-news.tsx`, `create-go.tsx`, `create-hub.tsx` | Publish events (`events` bucket), news (`news` bucket), government orders (`government_orders` bucket), and hub updates. |
+| `admin/manage-directory.tsx`, `manage-polls.tsx` | Manage `directory_contacts` executive listings and create/delete division-targeted polls. |
+
+## UGC Safety & Moderation (`ctx/ModerationContext.tsx`)
+
+Backed by migration `046_ugc_user_reports_and_blocks.sql`:
+
+- **Report Categories (`REPORT_REASONS`)**: Members can report profiles or behavior for *Inappropriate Profile Photo or Bio*, *Harassment, Hate Speech, or Abusive Behavior*, *Impersonation, Fake Profile, or Fraud*, *Spam or Commercial Solicitation*, or *Other Objectionable Content*, writing rows into `public.user_reports`.
+- **Instant Blocking (`blocked_users`)**: `ModerationContext` maintains blocked IDs in both `public.blocked_users` and `@sabca_blocked_users` in `AsyncStorage`. Member views (`app/(tabs)/sabca.tsx` and `app/directory/[division].tsx`) support press-and-hold moderation gestures (`showModerationOptions`) and exclude blocked entries via `!isBlocked(item.id)`.
+- **Zero-Tolerance EULA**: In-app usage terms and EULA acceptance/reference remain accessible from registration (`app/(auth)/terms.tsx`) and the member profile menu (`app/(tabs)/index.tsx`).

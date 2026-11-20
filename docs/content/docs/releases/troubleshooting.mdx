@@ -1,0 +1,37 @@
+---
+title: Troubleshooting & Runbooks
+description: Common build, deep link, Supabase RLS, Metro cache, and Fumadocs MDX issues with verified resolutions.
+icon: Wrench
+---
+
+# Troubleshooting & Engineering Runbooks
+
+## 1. Password Reset Deep Links Fail on Cold/Warm Launch (iOS)
+
+**Symptom**: Clicking the password recovery email on iPhone opens the SABCA app to the Login screen instead of routing to `/(auth)/reset-password`, or shows an infinite verification spinner.
+
+**Causes & Fixes**:
+1. Check that `sabca-app/ios/SceneDelegate.swift` and `sabca-app/ios/SABCA/SceneDelegate.swift` are identical (`diff -u ios/SceneDelegate.swift ios/SABCA/SceneDelegate.swift`) and forward both `urlContexts` and `userActivities` to `AppDelegate`. Re-apply both copies immediately if `npx expo prebuild` regenerated `ios/`.
+2. Verify `sabca-app/app.json` `"scheme"` is `"sabcaapp"` and Supabase Redirect URLs whitelist `sabcaapp://**`.
+3. Verify `tests/password_reset_deeplink.test.js` passes (`npm test`).
+
+## 2. Infinite Recursion Error on `profiles` RLS
+
+**Symptom**: Login or Admin Users queries fail with PostgreSQL infinite recursion errors when checking `profiles.role`.
+
+**Resolution**: Never query `public.profiles` directly inside a `profiles` RLS policy. Migrations `018_safe_admin_visibility.sql` and `024_moderator_division_rls.sql` isolate admin and moderator checks inside `SECURITY DEFINER` helper functions.
+
+## 3. Hardcoded Card Data Appears for Pending Users
+
+**Symptom**: Newly registered accounts see sample company names, blood groups, or `: NONE` on their ID card or PDF export.
+
+**Resolution**: Route all formatting through `formatIdCardFields()` in `sabca-app/utils/idCardFormatter.ts` and validate with `tests/id_card_fields.test.js`. Unset fields must return `null` cleanly instead of fallback strings.
+
+## 4. Fumadocs Build / Client Hook Errors (`docs/`)
+
+**Symptom**: `pnpm build` in `docs/` fails referencing `window`, `document`, WebGL, or `ssr: false` inside Server Components.
+
+**Resolution**:
+- Mark all browser-only components (`Mermaid`, `SabcaArchitecture3D`, `MemberIdCard3D`, `MigrationExplorer`, `VersionSyncMatrix`) with `'use client'`.
+- Import `mermaid` and `three` + `OrbitControls` dynamically inside `useEffect` (with cleanup and `ResizeObserver`) rather than top-level evaluation or `next/dynamic(..., { ssr: false })` inside RSC files.
+- Verify with `pnpm run types:check && pnpm build`.
