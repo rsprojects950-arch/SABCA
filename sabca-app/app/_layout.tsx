@@ -8,7 +8,6 @@ import { View, ActivityIndicator } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { ToastProvider } from '../ctx/ToastContext';
 import { StatusBar } from 'expo-status-bar';
-import { supabase } from '../lib/supabase';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '../lib/react-query';
 import { ThemeProvider } from '../ctx/ThemeContext';
@@ -19,17 +18,61 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../lib/i18n';
 
 const InitialLayout = () => {
-  const { session, isLoading, isProfileComplete } = useAuth();
+  const {
+    session,
+    isLoading,
+    isProfileComplete,
+    isPasswordRecovery,
+    isProcessingRecoveryLink,
+    processAuthDeepLink,
+  } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const linkingUrl = Linking.useLinkingURL();
+
+  useEffect(() => {
+    if (linkingUrl) {
+      void processAuthDeepLink(linkingUrl);
+    }
+  }, [linkingUrl, processAuthDeepLink]);
+
+  useEffect(() => {
+    // Handle deep links for auth (e.g. Password Reset) across iOS SceneDelegate & Android
+    const initialLinkingUrl = Linking.getLinkingURL();
+    if (initialLinkingUrl) {
+      void processAuthDeepLink(initialLinkingUrl);
+    }
+
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        void processAuthDeepLink(url);
+      }
+    });
+
+    const subscription = Linking.addEventListener('url', (event) => {
+      void processAuthDeepLink(event.url);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [processAuthDeepLink]);
 
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const isResetPassword = segments[1] === 'reset-password';
-    const isPublicLegal = segments[1] === 'privacy' || segments[1] === 'terms';
-    const inOnboardingGroup = segments[0] === 'onboarding';
+    const segmentList = segments as string[];
+    const inAuthGroup = segmentList[0] === '(auth)';
+    const isResetPassword = segmentList[1] === 'reset-password';
+    const isPublicLegal = segmentList[1] === 'privacy' || segmentList[1] === 'terms';
+    const inOnboardingGroup = segmentList[0] === 'onboarding';
+
+    if (isPasswordRecovery || isProcessingRecoveryLink) {
+      if (!isResetPassword) {
+        router.replace('/(auth)/reset-password');
+      }
+      return;
+    }
 
     if (!session && !inAuthGroup) {
       // Not logged in -> Login
@@ -45,7 +88,7 @@ const InitialLayout = () => {
         router.replace('/(tabs)');
       }
     }
-  }, [session, isLoading, isProfileComplete, segments]);
+  }, [session, isLoading, isProfileComplete, isPasswordRecovery, isProcessingRecoveryLink, segments]);
 
   if (isLoading) {
     return (
@@ -59,47 +102,6 @@ const InitialLayout = () => {
 };
 
 export default function RootLayout() {
-  useEffect(() => {
-    // (Now handled by Server-Side Cron Job - 049_server_automation.sql)
-    
-    // 3. Handle Deep Links for Auth (e.g. Password Reset)
-    const handleUrl = (url: string) => {
-      // Supabase often puts tokens in the hash (#) instead of query (?)
-      const { queryParams, hostname, path } = Linking.parse(url);
-
-      let access_token = queryParams?.access_token as string;
-      let refresh_token = queryParams?.refresh_token as string;
-
-      // Extract from hash if not in query
-      if (!access_token && url.includes('#')) {
-        const hash = url.split('#')[1];
-        const params = new URLSearchParams(hash);
-        access_token = params.get('access_token') || '';
-        refresh_token = params.get('refresh_token') || '';
-      }
-
-      if (access_token) {
-        supabase.auth.setSession({
-          access_token: access_token,
-          refresh_token: refresh_token || '',
-        });
-      }
-    };
-
-    Linking.getInitialURL().then((url) => {
-      if (url) handleUrl(url);
-    });
-
-    const subscription = Linking.addEventListener('url', (event) => {
-      handleUrl(event.url);
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, []);
-
-
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>

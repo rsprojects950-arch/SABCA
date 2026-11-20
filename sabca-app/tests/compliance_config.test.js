@@ -99,5 +99,35 @@ test('Apple Compliance: Project Configurations & iPad Universal Support', async 
     await t.test('Verifies IPHONEOS_DEPLOYMENT_TARGET is iOS 15.1+', () => {
         assert(pbxproj.includes('IPHONEOS_DEPLOYMENT_TARGET = 15.1;'), 'Deployment target must be 15.1');
     });
+
+    await t.test('Verifies version and build number parity across app.json, package.json, iOS, and Android', () => {
+        const pkgPath = path.resolve(__dirname, '../package.json');
+        const gradlePath = path.resolve(__dirname, '../android/app/build.gradle');
+        const infoPlistContent = fs.readFileSync(infoPlistPath, 'utf8');
+        const pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        const gradleContent = fs.readFileSync(gradlePath, 'utf8');
+
+        const expectedVersion = appJson.expo.version;
+        const expectedIosBuild = String(appJson.expo.ios.buildNumber);
+        const expectedAndroidCode = String(appJson.expo.android.versionCode);
+
+        assert.strictEqual(pkgJson.version, expectedVersion, 'package.json version must match app.json');
+        assert(
+            infoPlistContent.includes(`<key>CFBundleShortVersionString</key>\n    <string>${expectedVersion}</string>`),
+            'Info.plist CFBundleShortVersionString must match app.json version'
+        );
+        assert(
+            infoPlistContent.includes(`<key>CFBundleVersion</key>\n    <string>${expectedIosBuild}</string>`),
+            'Info.plist CFBundleVersion must match app.json ios.buildNumber'
+        );
+
+        const marketingMatches = pbxproj.match(new RegExp(`MARKETING_VERSION = ${expectedVersion.replace(/\./g, '\\.')};`, 'g')) || [];
+        const buildMatches = pbxproj.match(new RegExp(`CURRENT_PROJECT_VERSION = ${expectedIosBuild};`, 'g')) || [];
+        assert.ok(marketingMatches.length >= 2, 'Xcode MARKETING_VERSION must match app.json version in Debug and Release');
+        assert.ok(buildMatches.length >= 2, 'Xcode CURRENT_PROJECT_VERSION must match app.json buildNumber in Debug and Release');
+
+        assert(gradleContent.includes(`versionName "${expectedVersion}"`), 'Android versionName must match app.json version');
+        assert(gradleContent.includes(`versionCode ${expectedAndroidCode}`), 'Android versionCode must match app.json android.versionCode');
+    });
 });
 

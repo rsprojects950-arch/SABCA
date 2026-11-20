@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 import { supabase } from '../lib/supabase';
+import { parseAuthDeepLink } from '../utils/authDeepLink';
 
 type AuthContextType = {
     session: Session | null;
@@ -17,6 +18,11 @@ type AuthContextType = {
     signInWithBiometrics: () => Promise<{ data: { session: Session | null; user: User | null }; error: any }>;
     deleteAccount: () => Promise<{ error: any }>;
     signOut: () => Promise<void>;
+    isPasswordRecovery: boolean;
+    isProcessingRecoveryLink: boolean;
+    recoveryError: string | null;
+    processAuthDeepLink: (url: string) => Promise<boolean>;
+    clearPasswordRecovery: () => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,6 +38,11 @@ const AuthContext = createContext<AuthContextType>({
     signInWithBiometrics: async () => ({ data: { session: null, user: null }, error: new Error('Not implemented') }),
     deleteAccount: async () => ({ error: new Error('Not implemented') }),
     signOut: async () => { },
+    isPasswordRecovery: false,
+    isProcessingRecoveryLink: false,
+    recoveryError: null,
+    processAuthDeepLink: async () => false,
+    clearPasswordRecovery: () => { },
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -39,6 +50,7 @@ export const useAuth = () => useContext(AuthContext);
 const BIOMETRIC_KEY = 'BIOMETRIC_ENABLED';
 const REFRESH_TOKEN_KEY = 'BIOMETRIC_REFRESH_TOKEN';
 const LEGACY_CREDENTIALS_KEY = 'USER_CREDENTIALS';
+const processedAuthUrls = new Set<string>();
 
 const SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
     keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
@@ -53,6 +65,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [isProfileComplete, setIsProfileComplete] = useState(true);
     const [isMembershipActive, setIsMembershipActive] = useState(true);
     const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+    const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+    const [isProcessingRecoveryLink, setIsProcessingRecoveryLink] = useState(false);
+    const [recoveryError, setRecoveryError] = useState<string | null>(null);
 
     useEffect(() => {
         // Purge legacy plaintext credentials to ensure MASVS-STORAGE compliance
@@ -85,7 +100,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setIsLoading(false);
         });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                setIsPasswordRecovery(true);
+            } else if (event === 'SIGNED_OUT') {
+                setIsPasswordRecovery(false);
+            }
+
             setSession(newSession);
             setUser(newSession?.user ?? null);
             checkUser(newSession?.user);
@@ -294,8 +315,81 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
             setIsAdmin(false);
             setUserRole(null);
+            setIsPasswordRecovery(false);
+            setIsProcessingRecoveryLink(false);
+            setRecoveryError(null);
         }
     };
+
+    const clearPasswordRecovery = useCallback(() => {
+        setIsPasswordRecovery(false);
+        setIsProcessingRecoveryLink(false);
+        setRecoveryError(null);
+    }, []);
+
+    const processAuthDeepLink = useCallback(async (url: string): Promise<boolean> => {
+        if (!url || processedAuthUrls.has(url)) {
+            return false;
+        }
+
+        const parsed = parseAuthDeepLink(url);
+        if (!parsed.isAuthLink) {
+            return false;
+        }
+
+        processedAuthUrls.add(url);
+
+        if (parsed.isRecovery) {
+            setIsPasswordRecovery(true);
+            setIsProcessingRecoveryLink(true);
+            setRecoveryError(null);
+        }
+
+        if (parsed.error || parsed.errorCode || parsed.errorDescription) {
+            setRecoveryError(
+                parsed.errorDescription ||
+                'This password reset link is invalid or has expired. Please request a new one.'
+            );
+            setIsProcessingRecoveryLink(false);
+            return true;
+        }
+
+        try {
+            if (parsed.accessToken) {
+                if (!parsed.refreshToken) {
+                    setRecoveryError('Reset link is incomplete. Please request a new password reset email.');
+                    return true;
+                }
+                const { error } = await supabase.auth.setSession({
+                    access_token: parsed.accessToken,
+                    refresh_token: parsed.refreshToken,
+                });
+                if (error) {
+                    setRecoveryError(error.message || 'Could not verify your password reset link. Please request a new one.');
+                }
+            } else if (parsed.code) {
+                const { error } = await supabase.auth.exchangeCodeForSession(parsed.code);
+                if (error) {
+                    setRecoveryError(error.message || 'Could not verify your password reset link. Please request a new one.');
+                }
+            } else if (parsed.tokenHash && parsed.type === 'recovery') {
+                const { error } = await supabase.auth.verifyOtp({
+                    token_hash: parsed.tokenHash,
+                    type: 'recovery',
+                });
+                if (error) {
+                    setRecoveryError(error.message || 'Could not verify your password reset link. Please request a new one.');
+                }
+            }
+            return true;
+        } catch (err: any) {
+            console.error('Error processing auth deep link:', err);
+            setRecoveryError(err?.message || 'Could not verify your password reset link. Please request a new one.');
+            return true;
+        } finally {
+            setIsProcessingRecoveryLink(false);
+        }
+    }, []);
 
     const value = React.useMemo(() => ({
         session,
@@ -311,7 +405,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signInWithBiometrics,
         deleteAccount,
         signOut,
-    }), [session, user, isLoading, isAdmin, userRole, isProfileComplete, isMembershipActive, isBiometricEnabled]);
+        isPasswordRecovery,
+        isProcessingRecoveryLink,
+        recoveryError,
+        processAuthDeepLink,
+        clearPasswordRecovery,
+    }), [
+        session,
+        user,
+        isLoading,
+        isAdmin,
+        userRole,
+        isProfileComplete,
+        isMembershipActive,
+        isBiometricEnabled,
+        isPasswordRecovery,
+        isProcessingRecoveryLink,
+        recoveryError,
+        processAuthDeepLink,
+        clearPasswordRecovery,
+    ]);
 
     return (
         <AuthContext.Provider value={value}>

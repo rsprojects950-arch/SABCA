@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, ScrollView, BackHandler } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { Colors } from '../../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '../../ctx/ThemeContext';
 import { useAuth } from '../../ctx/AuthContext';
 
@@ -14,37 +14,81 @@ export default function ResetPassword() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [verifyingSession, setVerifyingSession] = useState(true);
+    const [localError, setLocalError] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
     const { colors, isDark } = useTheme();
-    const { session, isLoading: authLoading } = useAuth();
+    const {
+        session,
+        isLoading: authLoading,
+        isProcessingRecoveryLink,
+        recoveryError,
+        clearPasswordRecovery,
+    } = useAuth();
 
-    const { code } = useLocalSearchParams();
+    const { code, token_hash, access_token, refresh_token, error: urlError, error_description } = useLocalSearchParams<{
+        code?: string;
+        token_hash?: string;
+        access_token?: string;
+        refresh_token?: string;
+        error?: string;
+        error_description?: string;
+    }>();
+
+    const handleBackToLogin = useCallback(async () => {
+        clearPasswordRecovery();
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        router.replace('/(auth)/login');
+    }, [clearPasswordRecovery, router]);
 
     useEffect(() => {
-        if (!authLoading) {
-            if (session) {
-                setVerifyingSession(false);
-            } else {
-                // Wait a bit more for background sync
-                const timer = setTimeout(() => {
-                    if (!session) {
-                        Alert.alert(
-                            'Auth session missing!',
-                            'We could not verify your reset link. Please try requesting a new one from the Login screen.',
-                            [{ text: 'Go to Login', onPress: () => router.replace('/(auth)/login') }]
-                        );
-                    }
-                    setVerifyingSession(false);
-                }, 2000);
-                return () => clearTimeout(timer);
-            }
+        const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+            void handleBackToLogin();
+            return true;
+        });
+        return () => backSub.remove();
+    }, [handleBackToLogin]);
+
+    useEffect(() => {
+        if (recoveryError || urlError || error_description) {
+            const desc =
+                recoveryError ||
+                (typeof error_description === 'string' ? error_description : undefined) ||
+                'This password reset link is invalid or has expired. Please request a new one from the Login screen.';
+            setLocalError(desc);
+            setVerifyingSession(false);
+            return;
         }
-    }, [session, authLoading]);
+
+        if (authLoading || isProcessingRecoveryLink) {
+            setVerifyingSession(true);
+            return;
+        }
+
+        if (session) {
+            setLocalError(null);
+            setVerifyingSession(false);
+            return;
+        }
+
+        // Wait briefly for in-flight deep-link session establishment
+        const timer = setTimeout(() => {
+            setLocalError(
+                'We could not verify your reset link. It may have expired or already been used. Please request a new one from the Login screen.'
+            );
+            setVerifyingSession(false);
+        }, 4000);
+        return () => clearTimeout(timer);
+    }, [session, authLoading, isProcessingRecoveryLink, recoveryError, urlError, error_description, code, token_hash, access_token, refresh_token]);
 
     const handleUpdatePassword = async () => {
         if (!password || !confirmPassword) {
             Alert.alert('Error', 'Please fill in all fields');
+            return;
+        }
+
+        if (password.length < 6) {
+            Alert.alert('Error', 'Password must be at least 6 characters long.');
             return;
         }
 
@@ -59,8 +103,13 @@ export default function ResetPassword() {
         if (error) {
             Alert.alert('Error', error.message);
         } else {
-            Alert.alert('Success', 'Your password has been updated!');
-            router.replace('/(auth)/login');
+            clearPasswordRecovery();
+            await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+            Alert.alert(
+                'Success',
+                'Your password has been updated! Please sign in with your new password.',
+                [{ text: 'Sign In', onPress: () => router.replace('/(auth)/login') }]
+            );
         }
         setLoading(false);
     };
@@ -75,7 +124,16 @@ export default function ResetPassword() {
                 title: 'Reset Password',
                 headerTransparent: true,
                 headerTintColor: '#FFF',
-                headerBackTitle: 'Login'
+                headerBackVisible: false,
+                headerLeft: () => (
+                    <TouchableOpacity
+                        onPress={() => void handleBackToLogin()}
+                        style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4, paddingRight: 8 }}
+                    >
+                        <ArrowLeft size={20} color="#FFF" />
+                        <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '600', marginLeft: 4 }}>Login</Text>
+                    </TouchableOpacity>
+                ),
             }} />
             <LinearGradient
                 colors={isDark ? ['#0F172A', '#1E293B', '#1E293B'] : Colors.gradients.primary}
@@ -97,6 +155,24 @@ export default function ResetPassword() {
                         <View style={styles.loadingContainer}>
                             <ActivityIndicator size="large" color="#FFF" />
                             <Text style={styles.loadingText}>Verifying session...</Text>
+                        </View>
+                    ) : localError ? (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorTitle}>Reset Link Issue</Text>
+                            <Text style={styles.errorDescription}>{localError}</Text>
+                            <TouchableOpacity
+                                style={[styles.button, { width: '100%', marginTop: 16 }]}
+                                onPress={() => void handleBackToLogin()}
+                            >
+                                <LinearGradient
+                                    colors={isDark ? ['#3B82F6', '#2563EB'] : Colors.gradients.button}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.gradientButton}
+                                >
+                                    <Text style={styles.buttonText}>Back to Login</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
                         </View>
                     ) : (
                         <>
@@ -227,6 +303,23 @@ const styles = StyleSheet.create({
         marginTop: 12,
         fontSize: 14,
         fontWeight: '500',
+    },
+    errorContainer: {
+        alignItems: 'center',
+        paddingVertical: 8,
+    },
+    errorTitle: {
+        color: '#FCA5A5',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    errorDescription: {
+        color: '#E2E8F0',
+        fontSize: 14,
+        lineHeight: 20,
+        textAlign: 'center',
     },
     button: {
         marginTop: 10,

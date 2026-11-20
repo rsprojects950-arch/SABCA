@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../ctx/LanguageContext';
 import { Languages } from 'lucide-react-native';
 import { signQRCode } from '../../utils/crypto_utils';
+import { escapeHtml, formatIdCardFields } from '../../utils/idCardFormatter';
 
 
 const styles = StyleSheet.create({
@@ -707,6 +708,7 @@ export default function ProfileScreen() {
   });
 
   const profile = profileData || null;
+  const idCardFields = useMemo(() => formatIdCardFields(profile, user?.email), [profile, user?.email]);
 
   // Fetch Notification Count
   const { data: notifCount, refetch: refetchNotifCount } = useQuery({
@@ -837,13 +839,20 @@ export default function ProfileScreen() {
 
   const generateIdCardHtml = (profile: any, user: any) => {
     const name = profile?.full_name || user?.user_metadata?.full_name || 'Member';
-    const id = profile?.sabca_id || 'Pending';
     const division = profile?.division || 'Unassigned';
-    const isLifeMemberInside = profile?.membership_type?.toLowerCase() === 'life' || profile?.membership_type?.toLowerCase() === 'lifetime';
-    const typeDisplay = isLifeMemberInside ? 'LIFETIME' : (profile?.membership_type || 'General').toUpperCase();
-    const validUntil = isLifeMemberInside ? 'LIFETIME' : (profile?.membership_expiry ? new Date(profile.membership_expiry).toLocaleDateString() : 'N/A');
-    const status = profile?.status || 'Active';
-    const statusColor = status === 'Active' ? Colors.light.success : Colors.light.notification;
+    const cardFields = formatIdCardFields(profile, user?.email);
+    const contactHtml = cardFields.contactLine
+      ? `<div class="user-phone">${escapeHtml(cardFields.contactLine)}</div>`
+      : '';
+    const companyHtml = cardFields.companyName
+      ? `<h2 class="company-name" style="font-weight: 700; letter-spacing: 0.5px; font-size: 9pt; margin-bottom: 0.3mm; color: white; text-transform: uppercase; font-family: Helvetica, sans-serif; margin-top: 0;">${escapeHtml(cardFields.companyName)}</h2>`
+      : '';
+    const locationHtml = cardFields.location
+      ? `<p class="company-location" style="font-size: 6pt; margin-bottom: 0.2mm; opacity: 0.95; line-height: 7pt; font-family: Helvetica, sans-serif; font-weight: 600; margin-top: 0;">${escapeHtml(cardFields.location).replace(/\n/g, '<br>')}</p>`
+      : '';
+    const emailHtml = cardFields.email
+      ? `<p class="company-email" style="font-size: 6pt; opacity: 0.95; line-height: 7pt; font-family: Helvetica, sans-serif; font-weight: 600; margin-top: 0;">e-mail: ${escapeHtml(cardFields.email)}</p>`
+      : '';
     // Use a public API for QR code image in PDF since we can't easily inline the React component
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrValue)}`;
     const defaultAvatarSvg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%23CBD5E1'/><circle cx='50' cy='40' r='20' fill='%2364748B'/><path d='M 20 85 C 20 65, 80 65, 80 85 Z' fill='%2364748B'/></svg>";
@@ -888,14 +897,12 @@ export default function ProfileScreen() {
                 <img src="${Base64Images.sabcaLogo}" class="logo-img" />
               </div>
               <div class="user-info">
-                <h1 class="user-name">${name}</h1>
-                <p class="user-membership"><strong>MEMBER-SABCA</strong> - ${division.split('(')[0].trim()}</p>
+                <h1 class="user-name">${escapeHtml(name)}</h1>
+                <p class="user-membership"><strong>MEMBER-SABCA</strong> - ${escapeHtml(division.split('(')[0].trim())}</p>
                 <div class="user-details">
-                  ID : ${id} : ${typeDisplay}
+                  ${escapeHtml(cardFields.idLine)}
                 </div>
-                <div class="user-phone">
-                  ${profile?.phone ? profile.phone.replace(/^(\+91[- ]?)/, '') : ''} : Blood Group : ${profile?.blood_group || 'O+'}
-                </div>
+                ${contactHtml}
               </div>
               <div class="avatar-box">
                 <img src="${profile?.avatar_url || defaultAvatarSvg}" class="avatar-img" />
@@ -903,9 +910,9 @@ export default function ProfileScreen() {
             </div>
             <div class="content-bottom" style="display: flex; flex-direction: row; justify-content: space-between; align-items: flex-end; padding: 0 4mm 3.5mm 4mm; width: 100%; position: absolute; bottom: 0; box-sizing: border-box;">
               <div class="company-info" style="flex: 1; padding-right: 2mm; display: flex; flex-direction: column; justify-content: flex-end; max-width: 58mm;">
-                <h2 class="company-name" style="font-weight: 700; letter-spacing: 0.5px; font-size: 9pt; margin-bottom: 0.3mm; color: white; text-transform: uppercase; font-family: Helvetica, sans-serif; margin-top: 0;">${profile?.company_name || 'S R EDIFICE PVT LTD'}</h2>
-                <p class="company-location" style="font-size: 6pt; margin-bottom: 0.2mm; opacity: 0.95; line-height: 7pt; font-family: Helvetica, sans-serif; font-weight: 600; margin-top: 0;">${profile?.location || '# 6-120 / 504, Autumn Field Apartment, 3rd Road,<br>Chalasani Nagar, Kanuru,VIJAYAWADA - 520007'}</p>
-                <p class="company-email" style="font-size: 6pt; opacity: 0.95; line-height: 7pt; font-family: Helvetica, sans-serif; font-weight: 600; margin-top: 0;">e-mail: ${profile?.email || 'srcvjw@gmail.com, srcvjwd@gmail.com'}</p>
+                ${companyHtml}
+                ${locationHtml}
+                ${emailHtml}
               </div>
               <div class="qr-container" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: flex-end; width: 11mm; height: 11.7mm;">
                 <div class="qr-box" style="width: 11mm; height: 11mm; padding: 0.5mm; background: white; border-radius: 0.5mm; display: flex; justify-content: center; align-items: center;">
@@ -1112,14 +1119,16 @@ export default function ProfileScreen() {
                 )}
 
                 <Text style={{ color: '#0f4a8a', fontSize: pt(7), fontWeight: '400', fontFamily: 'Helvetica' }} numberOfLines={1}>
-                  ID : {profile?.sabca_id || 'PENDING'} : {isLifeMember ? 'LIFE TIME' : (profile?.membership_type || 'GENERAL').toUpperCase()}
+                  {idCardFields.idLine}
                 </Text>
 
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ color: '#0f4a8a', fontSize: pt(8.5), fontWeight: '400', marginRight: mm(1), fontFamily: 'Helvetica' }} numberOfLines={1} adjustsFontSizeToFit={true} minimumFontScale={0.7}>
-                    {profile?.phone ? profile.phone.replace(/^(\+91[- ]?)/, '') : ''} : Blood Group : {profile?.blood_group || 'O+'}
-                  </Text>
-                </View>
+                {idCardFields.contactLine && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ color: '#0f4a8a', fontSize: pt(8.5), fontWeight: '400', marginRight: mm(1), fontFamily: 'Helvetica' }} numberOfLines={1} adjustsFontSizeToFit={true} minimumFontScale={0.7}>
+                      {idCardFields.contactLine}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               {/* Avatar Right */}
@@ -1137,15 +1146,19 @@ export default function ProfileScreen() {
             <View style={{ flex: 1 }} />
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: mm(3.5), paddingLeft: mm(4), paddingRight: mm(4), width: '100%', position: 'absolute', bottom: 0, zIndex: 2 }}>
               <View style={{ flex: 1, paddingRight: mm(2), height: mm(11.7), flexDirection: 'column', justifyContent: 'flex-end', maxWidth: mm(58) }}>
-                <Text style={{ color: '#FFF', fontSize: pt(9), fontWeight: '700', letterSpacing: 0.5, marginBottom: mm(0.3), textTransform: 'uppercase', fontFamily: 'Helvetica' }} numberOfLines={1}>
-                  {profile?.company_name || 'S R EDIFICE PVT LTD'}
-                </Text>
-                <Text style={{ color: '#FFF', fontSize: pt(6), marginBottom: mm(0.2), opacity: 0.95, lineHeight: pt(7), fontFamily: 'Helvetica', fontWeight: '600' }} numberOfLines={2}>
-                  {profile?.location || '# 6-120 / 504, Autumn Field Apartment, 3rd Road,\nChalasani Nagar, Kanuru, VIJAYAWADA - 520007'}
-                </Text>
-                {profile?.email && (
-                  <Text style={{ color: '#FFF', fontSize: pt(6), opacity: 0.95, lineHeight: pt(7), fontFamily: 'Helvetica', fontWeight: '600' }}>
-                    e-mail: {profile?.email || 'srcvjw@gmail.com, srcvjwd@gmail.com'}
+                {idCardFields.companyName && (
+                  <Text style={{ color: '#FFF', fontSize: pt(9), fontWeight: '700', letterSpacing: 0.5, marginBottom: mm(0.3), textTransform: 'uppercase', fontFamily: 'Helvetica' }} numberOfLines={1}>
+                    {idCardFields.companyName}
+                  </Text>
+                )}
+                {idCardFields.location && (
+                  <Text style={{ color: '#FFF', fontSize: pt(6), marginBottom: mm(0.2), opacity: 0.95, lineHeight: pt(7), fontFamily: 'Helvetica', fontWeight: '600' }} numberOfLines={2}>
+                    {idCardFields.location}
+                  </Text>
+                )}
+                {idCardFields.email && (
+                  <Text style={{ color: '#FFF', fontSize: pt(6), opacity: 0.95, lineHeight: pt(7), fontFamily: 'Helvetica', fontWeight: '600' }} numberOfLines={1}>
+                    e-mail: {idCardFields.email}
                   </Text>
                 )}
               </View>

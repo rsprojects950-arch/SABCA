@@ -2,7 +2,7 @@
   "expo": {
     "name": "SABCA",
     "slug": "sabca-app",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/app_icon_square.jpg",
     "scheme": "sabcaapp",
@@ -12,7 +12,7 @@
       "supportsTablet": true,
       "requireFullScreen": true,
       "bundleIdentifier": "com.infraxpert.sabca",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "infoPlist": {
         "NSFaceIDUsageDescription": "SABCA uses Face ID or Touch ID to provide secure, biometric authentication into your member account.",
         "ITSAppUsesNonExemptEncryption": false,
@@ -88,7 +88,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "package": "com.infraxpert.sabca",
-      "versionCode": 7
+      "versionCode": 8
     },
     "plugins": [
       [

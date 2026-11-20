@@ -102,7 +102,8 @@ export default function Login() {
     };
 
     const handleResetPassword = async () => {
-        if (!resetEmail) {
+        const cleanedEmail = resetEmail.trim().toLowerCase();
+        if (!cleanedEmail) {
             Alert.alert('Error', 'Please enter your email address.');
             return;
         }
@@ -115,7 +116,7 @@ export default function Login() {
         const redirectUrl = Linking.createURL('/(auth)/reset-password');
 
 
-        const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        const { error } = await supabase.auth.resetPasswordForEmail(cleanedEmail, {
             redirectTo: redirectUrl,
         });
 
